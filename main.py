@@ -26,7 +26,7 @@ class RL{original_name}:
         if i2 != len(lvls2): levels.extend(lvls2[i2:])
         return levels
 """
-# Template for the RL class methods
+# Template for the RL class binary methods
 RL_METHOD_TEMPLATE = """
 def {method_name}(self, {other_arg}):
     levels = self.combine_levels({other_arg})
@@ -38,11 +38,20 @@ def {method_name}(self, {other_arg}):
     return RL{original_name}(map_dict)
 """
 
+# Template for the RL class unary methods
+UNARY_METHOD_TEMPLATE = """
+def {method_name}(self):
+    map_dict = {{level: obj.{method_name}() for level, obj in self.map_dict.items()}}
+    return RL{original_name}(map_dict)
+"""
+
 # Template for the RL class __str__ method
 STR_METHOD_TEMPLATE = """
 def __str__(self):
     return str(self.map_dict)
 """
+
+IGNORE_METHODS = ['__init__', '__str__', '__repr__', '__getattr__', '__setattr__']
 
 def rlify_class(node):
     # node is the ClassDef AST node from original class (e.g., Integer)
@@ -50,16 +59,23 @@ def rlify_class(node):
     
     rl_methods = []  # List to store RL-ified method AST nodes
     for item in node.body:  # Loop over original class's methods
-        # Check if it’s a special method (starts with __) but not __init__
-        if isinstance(item, ast.FunctionDef) and item.name.startswith('__') and item.name != '__init__':
-            method_name = item.name  # e.g., '__add__', '__mul__'
-            args = item.args.args  # List of arguments (self, other)
-            if len(args) > 1:  # Ensure it takes a param beyond self
+        # Check if it’s a method (any name) and not in ignore list
+        if isinstance(item, ast.FunctionDef) and item.name not in IGNORE_METHODS:
+            method_name = item.name  # e.g., '__add__', '__neg__', 'multiply'
+            args = item.args.args  # List of arguments (self, other or just self)
+            if len(args) == 2 :  # Ensure it takes a param beyond self (binary)
                 other_arg = args[1].arg  # 'other'
                 # Create an AST node for the RL-ified method
                 rl_method = ast.parse(RL_METHOD_TEMPLATE.format(
                     method_name=method_name,
                     other_arg=other_arg,
+                    original_name=original_name
+                )).body[0]  # Get the FunctionDef node
+                rl_methods.append(rl_method)  # Add to list
+            elif len(args) == 1:  # Unary operation (just self)
+                # Create an AST node for the RL-ified unary method
+                rl_method = ast.parse(UNARY_METHOD_TEMPLATE.format(
+                    method_name=method_name,
                     original_name=original_name
                 )).body[0]  # Get the FunctionDef node
                 rl_methods.append(rl_method)  # Add to list

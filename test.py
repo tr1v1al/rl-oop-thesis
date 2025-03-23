@@ -1,6 +1,6 @@
 from input.integer import Integer
-from expected.rl_integer_expected import RLInteger
-#from output.rl_integer import RLInteger
+#from expected.rl_integer_expected import RLInteger
+from output.rl_integer import RLInteger
 
 int1,int2,int3,int4 = Integer(5),Integer(66),Integer(10), Integer(-17)
 RL1 = RLInteger({1:int1, 0.8:int2, 0.4:int3})

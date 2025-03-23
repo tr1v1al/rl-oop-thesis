@@ -44,5 +44,9 @@ class RLInteger:
             map_dict[level] = curr1.__mul__(curr2)
         return RLInteger(map_dict)
 
+    def __neg__(self):
+        map_dict = {level: obj.__neg__() for level, obj in self.map_dict.items()}
+        return RLInteger(map_dict)
+
     def __str__(self):
         return str(self.map_dict)
