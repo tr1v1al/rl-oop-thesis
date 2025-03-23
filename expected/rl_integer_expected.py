@@ -62,6 +62,11 @@ class RLInteger:
             curr2 = other.map_dict.get(level, curr2)
             map_dict[level] = curr1.__mul__(curr2)
         return RLInteger(map_dict)
+    
+    # RL negation
+    def __neg__(self):
+        map_dict = {level: obj.__neg__() for level, obj in self.map_dict.items()}
+        return RLInteger(map_dict)
 
     # For human readability. 
     # Calls __repr__ internally for keys and values of the dict

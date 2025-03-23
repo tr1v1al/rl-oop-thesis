@@ -9,6 +9,9 @@ class Integer:
     # Multiplication method
     def __mul__(self, other):
         return Integer(self.val * other.val)
+    # Negation method
+    def __neg__(self):
+        return Integer(-self.val)
     # For debugging
     def __repr__(self):
         return f"Integer({self.val})"
