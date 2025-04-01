@@ -7,7 +7,11 @@ class RLInteger:
             raise TypeError('Input must be a dictionary')
         if 1 not in map_dict:
             raise ValueError('Level 1 must be present in every RL')
+        prev = 1
         for alpha in map_dict:
+            if prev < alpha:
+                raise ValueError('Levels must be in descending order')
+            prev = alpha
             if not 0 < alpha <= 1:
                 raise ValueError('Levels must be in (0, 1]')
         self.map_dict = {alpha: deepcopy(obj) for alpha, obj in map_dict.items()}

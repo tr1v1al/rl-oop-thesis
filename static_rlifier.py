@@ -1,17 +1,17 @@
-import ast  # For parsing and manipulating Python code as an AST
+import ast  # For parsing and manipulating Python code as an AST (Abstract Syntax Tree)
 import os   # For handling file paths and directories
 
-# Template for the RL class as a string; {original_name} will be replaced
+# Template for the RL class
 RL_CLASS_TEMPLATE = """
-class RL{original_name}:
+class RL{class_name}:
     def __init__(self, map_dict):
-        if not isinstance(map_dict, dict):
-            raise TypeError('Input must be a dictionary')
-        if 1 not in map_dict:
-            raise ValueError('Level 1 must be present in every RL')
+        if not isinstance(map_dict, dict): raise TypeError('Input must be a dictionary')
+        if 1 not in map_dict: raise ValueError('Level 1 must be present in every RL')
+        prev = 1
         for alpha in map_dict:
-            if not 0 < alpha <= 1:
-                raise ValueError('Levels must be in (0, 1]')
+            if prev < alpha: raise ValueError('Levels must be in descending order')
+            prev = alpha
+            if not 0 < alpha <= 1: raise ValueError('Levels must be in (0, 1]')
         self.map_dict = {{alpha: deepcopy(obj) for alpha, obj in map_dict.items()}}
     
     def combine_levels(self, other):
@@ -35,14 +35,14 @@ def {method_name}(self, {other_arg}):
         curr1 = self.map_dict.get(level, curr1)
         curr2 = {other_arg}.map_dict.get(level, curr2)
         map_dict[level] = curr1.{method_name}(curr2)
-    return RL{original_name}(map_dict)
+    return RL{class_name}(map_dict)
 """
 
 # Template for the RL class unary methods
 UNARY_METHOD_TEMPLATE = """
 def {method_name}(self):
     map_dict = {{level: obj.{method_name}() for level, obj in self.map_dict.items()}}
-    return RL{original_name}(map_dict)
+    return RL{class_name}(map_dict)
 """
 
 # Template for the RL class __str__ method
@@ -51,84 +51,86 @@ def __str__(self):
     return str(self.map_dict)
 """
 
+# Methods in the original class to ignore
 IGNORE_METHODS = ['__init__', '__str__', '__repr__', '__getattr__', '__setattr__']
 
+# Function that given a class node returns an RLified class node
 def rlify_class(node):
-    # node is the ClassDef AST node from original class (e.g., Integer)
-    original_name = node.name  # Extracts class name
-    
-    rl_methods = []  # List to store RL-ified method AST nodes
-    for item in node.body:  # Loop over original class's methods
-        # Check if it’s a method (any name) and not in ignore list
+    class_name = node.name  # Extract class name
+    # Transform each method in the class
+    rl_methods = []
+    for item in node.body:
+        # Check if it’s a method and not in the ignore list
         if isinstance(item, ast.FunctionDef) and item.name not in IGNORE_METHODS:
-            method_name = item.name  # e.g., '__add__', '__neg__', 'multiply'
-            args = item.args.args  # List of arguments (self, other or just self)
-            if len(args) == 2 :  # Ensure it takes a param beyond self (binary)
-                other_arg = args[1].arg  # 'other'
-                # Create an AST node for the RL-ified method
-                rl_method = ast.parse(RL_METHOD_TEMPLATE.format(
+            method_name = item.name # Extract method name
+            # item.args is the node, item.args.args is the list of arguments
+            args = item.args.args
+            if len(args) == 2 :  # Binary operation (self, other)
+                other_arg = args[1].arg  # Extract parameter name
+                # Code for the RL method
+                rl_method_code = RL_METHOD_TEMPLATE.format(
                     method_name=method_name,
                     other_arg=other_arg,
-                    original_name=original_name
-                )).body[0]  # Get the FunctionDef node
-                rl_methods.append(rl_method)  # Add to list
-            elif len(args) == 1:  # Unary operation (just self)
-                # Create an AST node for the RL-ified unary method
-                rl_method = ast.parse(UNARY_METHOD_TEMPLATE.format(
+                    class_name=class_name
+                )
+                # Create the RL method node and add it to the list
+                rl_methods.append(ast.parse(rl_method_code).body[0])
+            elif len(args) == 1:  # Unary operation (self)
+                rl_method_code = UNARY_METHOD_TEMPLATE.format(
                     method_name=method_name,
-                    original_name=original_name
-                )).body[0]  # Get the FunctionDef node
-                rl_methods.append(rl_method)  # Add to list
+                    class_name=class_name
+                )
+                rl_methods.append(ast.parse(rl_method_code).body[0])
     
     # Add __str__ method explicitly
     str_method = ast.parse(STR_METHOD_TEMPLATE).body[0]
     rl_methods.append(str_method)
     
     # Format the template with the original class name
-    rl_class_code = RL_CLASS_TEMPLATE.format(original_name=original_name)
-    # Parse into AST; body[0] is the ClassDef (no import here)
+    rl_class_code = RL_CLASS_TEMPLATE.format(class_name=class_name)
+    # Create class node
     rl_class_node = ast.parse(rl_class_code).body[0]
     # Extend RL class with the generated methods
     rl_class_node.body.extend(rl_methods)
     return rl_class_node  # Return the RL class ClassDef node
 
+# Function for transforming classes in an input file into RL classes
+# Params: paths to input/output files
 def transform_file(input_path, output_path):
-    # Read input file from input path
+    # Read input file
     with open(input_path, 'r') as f:
         source = f.read()
-    # Parse into an AST (Module node)
+    # Parse into an AST
     tree = ast.parse(source)
-    # Validate: must have exactly one class
-    if len(tree.body) != 1 or not isinstance(tree.body[0], ast.ClassDef):
-        raise ValueError("Input file must contain exactly one class definition")
-    # Transform the class into RL version
-    rl_class_node = rlify_class(tree.body[0])
-    # Add import and unparse to source code
-    output_code = f"from copy import deepcopy\n\n{ast.unparse(rl_class_node)}"
-    # Write to output file (e.g. rl_integer.py)
+    # Transform each class node (ClassDef)
+    rl_classes = [rlify_class(node) for node in tree.body if isinstance(node, ast.ClassDef)]
+    # Error if there are no classes in the input file
+    if not rl_classes:
+        raise ValueError("Input file must contain at least one class.")
+    # Add deepcopy at the beginning, then join the code for all the RL classes
+    output_code = "from copy import deepcopy\n\n" + "\n\n".join(ast.unparse(cls) for cls in rl_classes)
+    # Write to output file
     with open(output_path, 'w') as f:
         f.write(output_code)
 
+# Main function for running this script directly
 def main(input_filename):
-    # Set directories
-    input_dir = "input"
-    output_dir = "output"
-    # Construct full paths
-    input_path = os.path.join(input_dir, input_filename)  # e.g., input/integer.py
-    output_filename = f"rl_{input_filename}"  # e.g., rl_integer.py
+    # Output file has the name of the input file and rl_ as prefix
+    output_filename = f"rl_{input_filename}"
+    # Default input/output directories
+    input_dir, output_dir = "input", "output"
+    # Paths to input and output files
+    input_path = os.path.join(input_dir, input_filename)
     output_path = os.path.join(output_dir, output_filename)
-    # Create directories if they don’t exist
-    os.makedirs(input_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
-    # Run the transformation
+    # Transform
     transform_file(input_path, output_path)
     print(f"Transformed {input_filename} to {output_filename}")
 
-# Entry point: runs if script is executed directly
+# Running this script directly
 if __name__ == "__main__":
     import sys
-    # Check for command-line argument
+    # Error handling
     if len(sys.argv) != 2:
-        print("Provide the name of the input file in the input directory as follows: python main.py <input_filename>")
+        print("Correct format: python static_rlifier.py <input_filename>\nInput file must be in input directory")
         sys.exit(1)
-    main(sys.argv[1])  # Pass filename (e.g., integer.py)
+    main(sys.argv[1])  # Call main function on the input file
