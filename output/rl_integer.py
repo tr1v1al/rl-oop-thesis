@@ -30,6 +30,21 @@ class RLInteger:
             levels.extend(lvls2[i2:])
         return levels
 
+    def pow2(self):
+        map_dict = {level: obj.pow2() for level, obj in self.map_dict.items()}
+        return RLInteger(map_dict)
+
+    def exp(self, e):
+        if not hasattr(e, 'map_dict'):
+            e = RLInteger({level: e for level in self.map_dict})
+        levels = self.combine_levels(e)
+        map_dict, curr1, curr2 = ({}, self.map_dict[1], e.map_dict[1])
+        for level in levels:
+            curr1 = self.map_dict.get(level, curr1)
+            curr2 = e.map_dict.get(level, curr2)
+            map_dict[level] = curr1.exp(curr2)
+        return RLInteger(map_dict)
+
     def __add__(self, other):
         if not hasattr(other, 'map_dict'):
             other = RLInteger({level: other for level in self.map_dict})

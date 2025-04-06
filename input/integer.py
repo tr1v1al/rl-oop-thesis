@@ -3,6 +3,12 @@ class Integer:
     # Initialized from an integer
     def __init__(self, val):
         self.val = val
+    # Power of 2 function
+    def pow2(self):
+        return Integer(self.val**2)
+    # Exponentiation function
+    def exp(self, e):
+        return Integer(self.val**e)
     # Addition method
     def __add__(self, other):
         return Integer(self.val + other.val)
