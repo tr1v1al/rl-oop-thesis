@@ -31,6 +31,8 @@ class RLInteger:
         return levels
 
     def __add__(self, other):
+        if not hasattr(other, 'map_dict'):
+            other = RLInteger({level: other for level in self.map_dict})
         levels = self.combine_levels(other)
         map_dict, curr1, curr2 = ({}, self.map_dict[1], other.map_dict[1])
         for level in levels:
@@ -40,6 +42,8 @@ class RLInteger:
         return RLInteger(map_dict)
 
     def __mul__(self, other):
+        if not hasattr(other, 'map_dict'):
+            other = RLInteger({level: other for level in self.map_dict})
         levels = self.combine_levels(other)
         map_dict, curr1, curr2 = ({}, self.map_dict[1], other.map_dict[1])
         for level in levels:
