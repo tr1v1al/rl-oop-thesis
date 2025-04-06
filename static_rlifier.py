@@ -29,6 +29,8 @@ class RL{class_name}:
 # Template for the RL class binary methods
 RL_METHOD_TEMPLATE = """
 def {method_name}(self, {other_arg}):
+    if not hasattr({other_arg}, 'map_dict'):
+        {other_arg} = RL{class_name}({{level: {other_arg} for level in self.map_dict}})
     levels = self.combine_levels({other_arg})
     map_dict, curr1, curr2 = {{}}, self.map_dict[1], {other_arg}.map_dict[1]
     for level in levels:

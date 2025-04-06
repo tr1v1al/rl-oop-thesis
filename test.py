@@ -16,6 +16,7 @@ print(RL1.combine_levels(RL2))
 print(RL1.map_dict[1] is RL2.map_dict[0.95])
 print(RL1+RL2)
 print(-RL1)
+print(RL1+Integer(60))
 
 # 71
 # 330
