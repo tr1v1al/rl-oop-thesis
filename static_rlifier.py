@@ -27,7 +27,7 @@ class RL{class_name}:
         return levels
 """
 # Template for the RL class binary methods
-RL_METHOD_TEMPLATE = """
+BINARY_METHOD_TEMPLATE = """
 def {method_name}(self, {other_arg}):
     if not hasattr({other_arg}, 'map_dict'):
         {other_arg} = RL{class_name}({{level: {other_arg} for level in self.map_dict}})
@@ -70,7 +70,7 @@ def rlify_class(node):
             if len(args) == 2 :  # Binary operation (self, other)
                 other_arg = args[1].arg  # Extract parameter name
                 # Code for the RL method
-                rl_method_code = RL_METHOD_TEMPLATE.format(
+                rl_method_code = BINARY_METHOD_TEMPLATE.format(
                     method_name=method_name,
                     other_arg=other_arg,
                     class_name=class_name
