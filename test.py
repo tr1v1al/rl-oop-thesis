@@ -21,6 +21,7 @@ print(-RL1)
 print(RL1+Integer(60))
 print(RL1.pow2())
 print(RL1.exp(3))
+
 # 71
 # 330
 # -5
@@ -31,3 +32,6 @@ print(RL1.exp(3))
 # False
 # {1: Integer(-12), 0.95: Integer(10), 0.8: Integer(71), 0.4: Integer(15), 0.2: Integer(20), 0.1: Integer(15)}
 # {1: Integer(-5), 0.8: Integer(-66), 0.4: Integer(-10)}
+# {1: Integer(65), 0.8: Integer(126), 0.4: Integer(70)}
+# {1: Integer(25), 0.8: Integer(4356), 0.4: Integer(100)}
+# {1: Integer(125), 0.8: Integer(287496), 0.4: Integer(1000)}
