@@ -124,6 +124,7 @@ class RL(metaclass=RLMeta):
         curr_kwargs = {key : rl_kwarg.get_object(level=1) for key, rl_kwarg in rl_kwargs.items()}
         
         # Perform operations levelwise
+        prev = None
         for level in levels:
             # Retrieve objects at the current level. 
             # If level is not present, fall back to previous level
@@ -136,10 +137,16 @@ class RL(metaclass=RLMeta):
             }
             # Operate with arguments at the current level. Retrieve the method_name method
             # for self and then call it with positional and keyword arguments
-            mapping[level] = getattr(curr_self, method_name)(*curr_args, **curr_kwargs)
-        
-        # Return resulting RL
-        return RL(mapping)
+            curr = getattr(curr_self, method_name)(*curr_args, **curr_kwargs)
+
+            # Add to mapping only if the object is on level 1
+            # or not the same as on the previous level
+            if level == 1 or curr != prev: mapping[level] = curr
+            prev = curr
+
+        # Return resulting RL, if mapping has 1 level then return the crisp object
+        # Otherwise the mapping is empty and None is returned
+        return RL(mapping) if len(mapping) > 1 else mapping[1]
 
     # Dynamic method dispatch. 
     # Intercept method calls when they are not defined in the class
@@ -150,7 +157,20 @@ class RL(metaclass=RLMeta):
 
     # String representation of an RL
     def __str__(self):
-        return str(self.__mapping)
+        # Compute max width for level column (including header)
+        level_width = max(len(str(level)) for level in self.__mapping) + 2
+        level_width = max(level_width, len("Level"))
+        # Compute max width for object column
+        obj_width = max(len(str(obj)) for obj in self.__mapping.values()) + 2
+        obj_width = max(obj_width, len("Object"))
+        # Build table
+        lines = []
+        lines.append(f"RL-{self.instance_class.__name__}")
+        lines.append(f"{'Level':<{level_width}} | {'Object':<{obj_width}}")
+        lines.append("-" * level_width + "-+-" + "-" * obj_width)
+        for level, obj in self.__mapping.items():
+            lines.append(f"{level:<{level_width}} | {str(obj):<{obj_width}}")
+        return "\n".join(lines)
     
 class A:
     def __init__(self, val):
@@ -161,7 +181,7 @@ class A:
     def __neg__(self):
         return A(-self.val)
     def bruh(self, o1, o2, o3, o4):
-        return "bruh"
+        print("hehe")
     # def genmethod(self, methodname, arg):
     #     result = getattr(self.val, methodname)(arg.val)
     #     return A(result)    
@@ -173,9 +193,22 @@ class A:
     def __repr__(self):
         return str(self.val)
     
-rla1 = RL({1: A(5), 0.8: A(5)})
+rla1 = RL({1: A(5), 0.6: A(6)})
 rla2 = RL({1: A(3), 0.6: A(2)})
 rla3 = RL({1: A(100), 0.3: A(55)})
 rla4 = RL({1: A(53), 0.7: A(1), 0.3: A(43), 0.2: A(10), 0.1: A(22)})
+rla5 = RL({1: 3, 0.6: 2})
+rla6 = RL({1: 7, 0.6: 5})
+rla7 = RL({1: [0,1], 0.8: [3,4]})
+rla8 = RL({1: [10,50], 0.5: [1,1,1]})
 print(rla1.bruh(rla2, rla4, o3=rla3, o4=1))
-print(rla1+rla2)
+print(rla5+rla6)
+print(rla7+rla8)
+
+# TODOOOOOOOOOOOOOOOOOOOOO
+# ERROR HANDLING
+# DOCS
+# TYPE HINTING 
+# TESTING
+# ADD SPECIAL METHODD
+# must the rl have instances of same class??
