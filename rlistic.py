@@ -25,6 +25,7 @@ class RLMeta(type):
             attrs[method_name] = RLMeta.make_special_method(method_name)
         return super().__new__(cls, name, bases, attrs)
 
+# RL class for graduality management
 class RL(metaclass=RLMeta):
     # Initialization
     def __init__(self, mapping):
@@ -50,25 +51,31 @@ class RL(metaclass=RLMeta):
         self.__instance_class = instance_classes.pop()
         self.__mapping = {alpha: deepcopy(obj) for alpha, obj in mapping.items()}
 
-    # Return the level set of the RL
+    # Get the level set of the RL
     def level_set(self):
         return list(self.__mapping.keys())
     
-    # Return object at a given level or the provided default value
+    # Get object at a given level or the provided default value
     def get_object(self, level, default=None):
         return self.__mapping.get(level, default) 
+    
+    # Get the class wrapped in the RL
+    @property
+    def instance_class(self):
+        return self.__instance_class
 
     # Combine levels of this RL and other RLs passed as parameters
     def __combine_levels(self, *args, **kwargs):
-        # Merging of two ordered arrays (descending order)
+        # Helper function for merging two ordered arrays (descending)
         def combine_levels_2lists(lvls1, lvls2):
             i1, i2, levels = 0, 0, []
+            # Merge until reaching the end of an array
             while i1 < len(lvls1) and i2 < len(lvls2):
                 curr1, curr2 = lvls1[i1], lvls2[i2]
                 levels.append(curr1 if curr1 >= curr2 else curr2)
                 i1 = i1 + 1 if curr1 >= curr2 else i1
                 i2 = i2 + 1 if curr2 >= curr1 else i2
-            # Extend remaining
+            # Extend with remaining levels
             if i1 != len(lvls1): levels.extend(lvls1[i1:])
             if i2 != len(lvls2): levels.extend(lvls2[i2:])
             return levels        
@@ -76,11 +83,13 @@ class RL(metaclass=RLMeta):
         # Levels of self
         levels = self.level_set()
 
-        # Combine with levels from other RLs, positional and keyword
+        # Combine with levels from other RLs
+        # Positional RL arguments
         for arg in args:
             other = arg.level_set()
             levels = combine_levels_2lists(levels, other)
         
+        # Keyword RL arguments
         for kwarg in kwargs.values():
             other = kwarg.level_set()
             levels = combine_levels_2lists(levels, other)
@@ -89,15 +98,17 @@ class RL(metaclass=RLMeta):
     
     # Wrapper with RL logic for methods
     def general_method(self, method_name, *args, **kwargs):
-        # RLify crisp positional and keyword arguments with list/dict comprehension
+        # RLify crisp arguments with list/dict comprehension
+        # Positional arguments
         rl_args = [
             RL({1 : arg}) if not isinstance(arg, RL) else arg 
             for arg in args
         ]
 
+        # Keyword arguments
         rl_kwargs = {
-            level : (RL({1 : obj}) if not isinstance(obj, RL) else obj)
-            for level, obj in kwargs.items()
+            key : (RL({1 : obj}) if not isinstance(obj, RL) else obj)
+            for key, obj in kwargs.items()
         }
 
         # Get all levels
@@ -105,18 +116,26 @@ class RL(metaclass=RLMeta):
 
         # Mapping dictionary for the returned RL
         mapping = {}
+
+        # Objects at current level, used to extend to levels not present in the level set
+        # Initialized to level 1. Self, positional and keyword arguments.
         curr_self = self.get_object(level=1)
         curr_args = [rl_arg.get_object(level=1) for rl_arg in rl_args]
         curr_kwargs = {key : rl_kwarg.get_object(level=1) for key, rl_kwarg in rl_kwargs.items()}
         
         # Perform operations levelwise
         for level in levels:
+            # Retrieve objects at the current level. 
+            # If level is not present, fall back to previous level
             curr_self = self.get_object(level, curr_self)
             curr_args = [rl_arg.get_object(level, curr) for rl_arg, curr in zip(rl_args, curr_args)]
             curr_kwargs = {
                 key : rl_kwarg.get_object(level, curr) 
                 for (key, rl_kwarg), curr 
-                in zip(rl_kwargs.items(), curr_kwargs)}
+                in zip(rl_kwargs.items(), curr_kwargs.values())
+            }
+            # Operate with arguments at the current level. Retrieve the method_name method
+            # for self and then call it with positional and keyword arguments
             mapping[level] = getattr(curr_self, method_name)(*curr_args, **curr_kwargs)
         
         # Return resulting RL
