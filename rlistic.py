@@ -3,6 +3,7 @@ from functools import partial
 
 # Common special methods to be added to RL class
 SPECIAL_METHODS = [
+    '__and__', '__or__',
     '__neg__', '__pos__', '__abs__',  # Unary
     '__add__', '__sub__', '__mul__', '__truediv__',  # Binary
     '__len__', '__getitem__', '__setitem__', '__delitem__',  # Container
@@ -171,39 +172,106 @@ class RL(metaclass=RLMeta):
         for level, obj in self.__mapping.items():
             lines.append(f"{level:<{level_width}} | {str(obj):<{obj_width}}")
         return "\n".join(lines)
-    
-class A:
-    def __init__(self, val):
-        self.val = val
-    def __add__(self, other):
-        print("called add in A")
-        return A(self.val+other.val)
-    def __neg__(self):
-        return A(-self.val)
-    def bruh(self, o1, o2, o3, o4):
-        print("hehe")
-    # def genmethod(self, methodname, arg):
-    #     result = getattr(self.val, methodname)(arg.val)
-    #     return A(result)    
-    # def __getattr__(self, methodname):
-    #     print("he")
-    #     return partial(self.genmethod, methodname)
-    def lmao(self):
-        return "lmao"
-    def __repr__(self):
-        return str(self.val)
-    
-rla1 = RL({1: A(5), 0.6: A(6)})
-rla2 = RL({1: A(3), 0.6: A(2)})
-rla3 = RL({1: A(100), 0.3: A(55)})
-rla4 = RL({1: A(53), 0.7: A(1), 0.3: A(43), 0.2: A(10), 0.1: A(22)})
-rla5 = RL({1: 3, 0.6: 2})
-rla6 = RL({1: 7, 0.6: 5})
-rla7 = RL({1: [0,1], 0.8: [3,4]})
-rla8 = RL({1: [10,50], 0.5: [1,1,1]})
-print(rla1.bruh(rla2, rla4, o3=rla3, o4=1))
-print(rla5+rla6)
-print(rla7+rla8)
+
+if __name__ == '__main__':
+    class A:
+        def __init__(self, val):
+            self.val = val
+        def __add__(self, other):
+            print("called add in A")
+            return A(self.val+other.val)
+        def __neg__(self):
+            return A(-self.val)
+        def bruh(self, o1, o2, o3, o4):
+            print("hehe")
+        # def genmethod(self, methodname, arg):
+        #     result = getattr(self.val, methodname)(arg.val)
+        #     return A(result)    
+        # def __getattr__(self, methodname):
+        #     print("he")
+        #     return partial(self.genmethod, methodname)
+        def lmao(self):
+            return "lmao"
+        def __repr__(self):
+            return str(self.val)
+        
+    rla1 = RL({1: A(5), 0.6: A(6)})
+    rla2 = RL({1: A(3), 0.6: A(2)})
+    rla3 = RL({1: A(100), 0.3: A(55)})
+    rla4 = RL({1: A(53), 0.7: A(1), 0.3: A(43), 0.2: A(10), 0.1: A(22)})
+
+    # Integers
+    rla5 = RL({1: 3, 0.6: 2})
+    rla6 = RL({1: 7, 0.6: 5})
+    print(rla5+rla6)
+    # RL-int
+    # Level | Object
+    # ------+-------
+    # 1     | 10
+    # 0.6   | 7
+
+    # Lists
+    rla7 = RL({1: [0,1], 0.8: [3,4]})
+    rla8 = RL({1: [10,50], 0.5: [1,1,1]})
+    print(rla7+rla8)
+    # RL-list
+    # Level | Object
+    # ------+------------------
+    # 1     | [0, 1, 10, 50]
+    # 0.8   | [3, 4, 10, 50]
+    # 0.5   | [3, 4, 1, 1, 1]    
+    print(rla8.__len__())
+    # RL-int
+    # Level | Object
+    # ------+-------
+    # 1     | 2
+    # 0.5   | 3
+
+    # Sets
+    rla9 = RL({1: {5,3,2}, 0.7: {1,2,7}})
+    rla10 = RL({1: {1,6,7}, 0.6: {9,4,10}})
+    rl_inter = rla9 & rla10
+    rl_union = rla9 | rla10
+    print(rl_inter)
+    print(rl_union)
+    # Level | Object
+    # ------+---------
+    # 1     | set()
+    # 0.7   | {1, 7}
+    # 0.6   | set()
+    # RL-set
+    # Level | Object
+    # ------+----------------------
+    # 1     | {1, 2, 3, 5, 6, 7}
+    # 0.7   | {1, 2, 6, 7}
+    # 0.6   | {1, 2, 4, 7, 9, 10}    
+
+    print("Length of the sets:")
+    print(len(rla9), len(rla10), sep='\n')
+    # Length of the sets:
+    # 3
+    # 3
+
+    print("Length of the intersection/union")
+    print(rl_inter.__len__(), rl_union.__len__(), sep='\n')
+    # RL-int
+    # Level | Object
+    # ------+-------
+    # 1     | 0
+    # 0.7   | 2
+    # 0.6   | 0
+    # RL-int
+    # Level | Object
+    # ------+-------
+    # 1     | 6
+    # 0.7   | 4
+    # 0.6   | 6
+
+
+
+
+
+    #print(rla1.bruh(rla2, rla4, o3=rla3, o4=1)
 
 # TODOOOOOOOOOOOOOOOOOOOOO
 # ERROR HANDLING
@@ -211,4 +279,6 @@ print(rla7+rla8)
 # TYPE HINTING 
 # TESTING
 # ADD SPECIAL METHODD
+# ADD MORE DEFAULT METHODS
+# ADD RLINPUT
 # must the rl have instances of same class??
