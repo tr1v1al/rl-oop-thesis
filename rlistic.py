@@ -269,7 +269,33 @@ if __name__ == '__main__':
 
 
 
+    class MySet(set):
+        def more_ternary(self, other1, other2):
+            return int(len(self & other2) >= len(other1 & other2))
+        def around_half_in(self,other):
+            ratio = len(self & other)/len(other) # Ratio of intersection/other
+            return 1 - 2*abs(ratio-0.5) # Around half relative quantifier (triangular shape)
+    rl_myset1 = RL({1:MySet({1,2,3}), 0.8 : MySet({3,4,5})})
+    rl_myset2 = RL({1:MySet({1,2,4}), 0.8 : MySet({5,6,7})})
+    rl_myset3 = RL({1:MySet({5,6,7}), 0.8 : MySet({5,6,7})})
 
+    print("More A than B in C")
+    print(rl_myset1.more_ternary(rl_myset2, rl_myset3))
+    print("Around half of A is in B")
+    print(rl_myset1.around_half_in(rl_myset2))
+    
+    # More A than B in C
+    # RL-int
+    # Level | Object
+    # ------+-------
+    # 1     | 1
+    # 0.8   | 0
+    # Around half of A is in B
+    # RL-float
+    # Level | Object
+    # ------+---------------------
+    # 1     | 0.6666666666666667
+    # 0.8   | 0.6666666666666666
 
     #print(rla1.bruh(rla2, rla4, o3=rla3, o4=1)
 
