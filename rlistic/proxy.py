@@ -1,5 +1,6 @@
 from copy import deepcopy
 from functools import partial
+from common import validate_mapping, rl_table
 
 # Common special methods to be added to RL class
 SPECIAL_METHODS = [
@@ -30,26 +31,11 @@ class RLMeta(type):
 class RL(metaclass=RLMeta):
     # Initialization
     def __init__(self, mapping):
-        # Error checking
-        if not isinstance(mapping, dict):
-            raise TypeError('Input must be a dictionary')
-        if 1 not in mapping:
-            raise ValueError('Level 1 must be present in every RL')
-        
-        prev = 1
-        for alpha in mapping:
-            if prev < alpha:
-                raise ValueError('Levels must be in descending order')
-            prev = alpha
-            if not 0 < alpha <= 1:
-                raise ValueError('Levels must be in (0, 1]')
-        
-        instance_classes = {type(obj) for obj in mapping.values()}
-        if len(instance_classes) != 1: 
-            raise TypeError('All instances must be of the same class')
+        # Check for errors
+        validate_mapping(mapping)
         
         # Save class of instances and levels as private attributes
-        self.__instance_class = instance_classes.pop()
+        self.__instance_class = type(mapping[1])
         self.__mapping = {alpha: deepcopy(obj) for alpha, obj in mapping.items()}
 
     # Get the level set of the RL
@@ -158,20 +144,7 @@ class RL(metaclass=RLMeta):
 
     # String representation of an RL
     def __str__(self):
-        # Compute max width for level column (including header)
-        level_width = max(len(str(level)) for level in self.__mapping) + 2
-        level_width = max(level_width, len("Level"))
-        # Compute max width for object column
-        obj_width = max(len(str(obj)) for obj in self.__mapping.values()) + 2
-        obj_width = max(obj_width, len("Object"))
-        # Build table
-        lines = []
-        lines.append(f"RL-{self.instance_class.__name__}")
-        lines.append(f"{'Level':<{level_width}} | {'Object':<{obj_width}}")
-        lines.append("-" * level_width + "-+-" + "-" * obj_width)
-        for level, obj in self.__mapping.items():
-            lines.append(f"{level:<{level_width}} | {str(obj):<{obj_width}}")
-        return "\n".join(lines)
+        return rl_table(self.__instance_class, self.__mapping)
 
 if __name__ == '__main__':
     class A:
