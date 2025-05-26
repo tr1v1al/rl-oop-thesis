@@ -24,7 +24,7 @@ def validate_mapping(mapping:dict) -> None:
         raise TypeError("All instances must be of the same class")
 
 # Visualize RL in table format
-def rl_table(cls:type, mapping:dict) -> str:
+def rl_table(cls_name:str, mapping:dict) -> str:
     # Compute max width for level column (including header)
     level_width = max(len(str(level)) for level in mapping) + 2
     level_width = max(level_width, len("Level"))
@@ -33,7 +33,7 @@ def rl_table(cls:type, mapping:dict) -> str:
     obj_width = max(obj_width, len("Object"))
     # Build table
     lines = []
-    lines.append(f"RL-{cls.__name__}")
+    lines.append(f"RL-{cls_name}")
     lines.append(f"{'Level':<{level_width}} | {'Object':<{obj_width}}")
     lines.append("-" * level_width + "-+-" + "-" * obj_width)
     for level, obj in mapping.items():
