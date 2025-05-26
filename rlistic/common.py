@@ -1,5 +1,5 @@
 # Check if the level-set is correct
-def validate_level_set(level_set:list) -> None:
+def validate_level_set(level_set:list[float]) -> None:
     if not isinstance(level_set, list):
         raise TypeError("Level-set must be a list")
     if not level_set:
