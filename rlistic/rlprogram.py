@@ -4,6 +4,7 @@ import shlex
 import sys
 import argparse
 import multiprocessing
+import time
 from common import validate_level_set, rl_table
 
 def run_program(command: list[str], inp: str) -> str:
@@ -13,6 +14,7 @@ def run_program(command: list[str], inp: str) -> str:
     Args:
         command (list[str]): Command list (e.g., ['python', 'program.py']).
         inp (str): Input to the program.
+
     Returns:
         output (str): Output captured from the executed program.
     """
@@ -38,6 +40,7 @@ def rlify_program(command: list[str], input_file: str, nproc: int = -1) -> dict:
         command (list[str]): Command list (e.g., ['python', 'program.py']).
         input_file (str): Path to file with levels (space-separated) on first line, inputs on rest.
         nproc (int): Number of processes (-1: all CPUs, 1: sequential, >1: specific count).
+
     Returns:
         output (dict): Dictionary with the output RL.
     """
@@ -65,7 +68,7 @@ def rlify_program(command: list[str], input_file: str, nproc: int = -1) -> dict:
     if len(inputs) != len(levels):
         raise ValueError(f"Input file must have {len(levels)} input lines, got {len(inputs)}")
     
-    # \Execute sequentially or with multiprocessing depending on nproc
+    # Execute sequentially or with multiprocessing depending on nproc
     if nproc == 0 or nproc < -1:
         raise ValueError(f"Number of processes must be -1 (all CPUs) or >= 1")
     
@@ -101,9 +104,12 @@ if __name__ == "__main__":
         # Split command string into list
         command_list = shlex.split(args.command)
         # Call rlify_program and get output
+        start_time = time.time()  # Start timing
         output=rlify_program(command_list, args.input, args.nproc)
+        end_time = time.time()  # End timing
         # Print table with the output RL
         print(rl_table("Program", output))
+        print(f"Execution time: {end_time - start_time:.3f} seconds")  # Print elapsed time
     except ValueError as e:
         print(f"Error: {e}")
         sys.exit(1)
