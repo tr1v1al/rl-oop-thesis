@@ -144,7 +144,7 @@ class RL(metaclass=RLMeta):
 
     # String representation of an RL
     def __str__(self):
-        return rl_table(self.__instance_class, self.__mapping)
+        return rl_table(self.instance_class.__name__, self.__mapping)
 
 if __name__ == '__main__':
     class A:
