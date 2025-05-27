@@ -5,7 +5,7 @@ import sys
 import argparse
 import multiprocessing
 import time
-from common import validate_level_set, rl_table
+from rlistic.common import validate_level_set, rl_table
 
 def run_program(command: list[str], inp: str) -> str:
     """

@@ -9,7 +9,7 @@ def validate_level_set(level_set:list[float]) -> None:
     if not all(isinstance(alpha, (float, int)) for alpha in level_set):
         raise TypeError("Levels must be real numbers")
     if not all(0 < alpha <= 1 for alpha in level_set):
-        raise ValueError("Levels must be in (0, 1]")
+        raise ValueError("Levels must be in (0,1]")
     if level_set != sorted(level_set, reverse=True):
         raise ValueError("Levels must be in descending order")
 
