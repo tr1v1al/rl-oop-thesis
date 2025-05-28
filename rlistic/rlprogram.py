@@ -1,11 +1,10 @@
 import subprocess
-import os.path
 import shlex
 import sys
 import argparse
 import multiprocessing
 import time
-from .common import validate_level_set, rl_table
+from .common import rl_table, read_rl_input
 
 def run_program(command: list[str], inp: str) -> str:
     """
@@ -32,46 +31,24 @@ def run_program(command: list[str], inp: str) -> str:
     except subprocess.CalledProcessError as e:
         raise ValueError(f"Program execution failed: {e.stderr}")
 
-def rlify_program(command: list[str], input_file: str, nproc: int = -1) -> dict:
+def rlify_program(command: list[str], input_rl: dict, nproc: int = -1) -> dict:
     """
     Run a program for each level of the RL, aggregate the output in a table representing the RL.
     
     Args:
         command (list[str]): Command list (e.g., ['python', 'program.py']).
-        input_file (str): Path to file with levels (space-separated) on first line, inputs on rest.
+        input_rl (dict): Input RL as a dictionary mapping levels to input strings.
         nproc (int): Number of processes (-1: all CPUs, 1: sequential, >1: specific count).
 
     Returns:
         output (dict): Dictionary with the output RL.
     """
-    # Validate input file existence
-    if not os.path.isfile(input_file):
-        raise ValueError(f"Input file not found: {input_file}")
-    
-    # Read input from input file, skip empty lines and strip input
-    with open(input_file, 'r') as f:
-        lines = [line.strip() for line in f.readlines() if line.strip()]
-    if len(lines) < 1:
-        raise ValueError("Input file is empty")
-    
-    # Parse space-separated levels from first line
-    try:
-        levels = [float(x) for x in lines[0].split()]
-    except ValueError:
-        raise ValueError("Levels must be space-separated floats (e.g., '1 0.8')")
-    
-    # Validate level set
-    validate_level_set(levels)
-    
-    # Get inputs from remaining lines
-    inputs = lines[1:]
-    if len(inputs) != len(levels):
-        raise ValueError(f"Input file must have {len(levels)} input lines, got {len(inputs)}")
     
     # Execute sequentially or with multiprocessing depending on nproc
     if nproc == 0 or nproc < -1:
         raise ValueError(f"Number of processes must be -1 (all CPUs) or >= 1")
-    
+    # Get levels and inputs
+    levels, inputs = list(input_rl.keys()), input_rl.values()
     results = []
     if nproc == 1:
         # Sequential execution
@@ -100,13 +77,14 @@ if __name__ == "__main__":
     
     # Parse arguments
     args = parser.parse_args()
-    
     try:
         # Split command string into list
         command_list = shlex.split(args.command)
-        # Call rlify_program and get output
+        # Read input
+        rl_input = read_rl_input(args.input)
+        # Call rlify_program, get the output and measure the time
         start_time = time.time()  # Start timing
-        output=rlify_program(command_list, args.input, args.nproc)
+        output = rlify_program(command_list, rl_input, args.nproc)
         end_time = time.time()  # End timing
         # Print table with the output RL
         print(rl_table("Program", output))
