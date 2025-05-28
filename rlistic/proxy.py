@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import partial
-from common import validate_mapping, rl_table
+from .common import validate_mapping, rl_table
 
 # Common special methods to be added to RL class
 SPECIAL_METHODS = [
@@ -146,6 +146,7 @@ class RL(metaclass=RLMeta):
     def __str__(self):
         return rl_table(self.instance_class.__name__, self.__mapping)
 
+# Run with python -m rlistic.proxy
 if __name__ == '__main__':
     class A:
         def __init__(self, val):

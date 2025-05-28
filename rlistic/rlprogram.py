@@ -5,7 +5,7 @@ import sys
 import argparse
 import multiprocessing
 import time
-from rlistic.common import validate_level_set, rl_table
+from .common import validate_level_set, rl_table
 
 def run_program(command: list[str], inp: str) -> str:
     """
@@ -90,6 +90,7 @@ def rlify_program(command: list[str], input_file: str, nproc: int = -1) -> dict:
     
     return mapping
 
+# Run with python -m rlistic.rlprogram
 if __name__ == "__main__":
     # Set up argument parser with short and long flags
     parser = argparse.ArgumentParser(description="Run a command for each level with inputs from a file.")
