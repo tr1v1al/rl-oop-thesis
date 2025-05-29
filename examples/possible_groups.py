@@ -1,14 +1,15 @@
 import sys
 
-def divisors(n: int) -> list[int]:
-    """ Return proper divisors of n (excluding 1 and n). """
+def group_sizes(students: set) -> set[int]:
+    """ Return proper divisors of cardinal of students """
+    n = len(students)
     return {str(d) for d in range(2, n) if n % d == 0}
 
 # Read from stdin and split the input by commas
-data = sys.stdin.read().strip().split(',')
+students = set(sys.stdin.read().strip().split(','))
 
-# Call divisors on the cardinal of the input set
-div = divisors(len(data))
+# Calculate the possible group sizes for students
+gs = group_sizes(students)
 
 # Output the comma-separated divisors to stdout
-print(','.join(div))
+print(','.join(gs))
