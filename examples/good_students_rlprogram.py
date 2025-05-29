@@ -15,6 +15,22 @@ def good_student_fuzzy_set(student_grades:dict) -> set:
     """
     return {name : good_student_membership(grade) for name, grade in student_grades.items()}
 
+def input_rl_to_str(input_rl:dict) -> dict:
+    """ Function that processes input RL-set into an RL-str """
+    input_rl = {
+        level : ','.join(students) 
+        for level, students in input_rl.items()
+    }
+    return input_rl
+
+def output_rl_to_set(output_rl:dict) -> dict:
+    """ Function that processes output RL-str into an RL-set"""
+    output_rl = {
+        level : set(int(x) for x in groups.split(',')) if groups != 'None' else set()
+        for level, groups in output_rl.items()
+    }
+    return output_rl
+
 # Program that calculates the possible groups sizes for 'good students'
 if __name__ == '__main__':
     # Students and their grades
@@ -35,19 +51,13 @@ if __name__ == '__main__':
     print("\nInput RL: ", rl_table("set", input_rl))
 
     # Transform the input RL-set into an RL-string to feed it to the program
-    input_rl = {
-        level : ','.join(students) 
-        for level, students in input_rl.items()
-    }
-
+    input_rl = input_rl_to_str(input_rl)
+    
     # Run the RL-program to calculate the possible groups
     output_rl = rlify_program(["python","examples/possible_groups.py"], input_rl)
 
     # Transform the output RL-string into an RL-set
-    output_rl = {
-        level : set(int(x) for x in groups.split(',')) if groups != 'None' else set()
-        for level, groups in output_rl.items()
-    }
+    output_rl = output_rl_to_set(output_rl)
     
     # Print the output RL
     print("\nOutput RL: ", rl_table("set", output_rl))
