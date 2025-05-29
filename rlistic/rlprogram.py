@@ -15,7 +15,7 @@ def run_program(command: list[str], inp: str) -> str:
         inp (str): Input to the program.
 
     Returns:
-        output (str): Output captured from the executed program.
+        str: Output captured from the executed program.
     """
     try:
         # Execute program with input while capturing output
@@ -41,7 +41,7 @@ def rlify_program(command: list[str], input_rl: dict, nproc: int = -1) -> dict:
         nproc (int): Number of processes (-1: all CPUs, 1: sequential, >1: specific count).
 
     Returns:
-        output (dict): Dictionary with the output RL.
+        dict: Dictionary with the output RL.
     """
     
     # Execute sequentially or with multiprocessing depending on nproc

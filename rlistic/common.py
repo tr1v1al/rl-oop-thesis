@@ -3,6 +3,17 @@ from typing import Callable # For type hinting
 
 # Check if the level-set is correct
 def validate_level_set(level_set:list[float]) -> None:
+    """
+    Validate a level-set of an RL.
+
+    Args:
+        level_set (list[float]): List of levels of the RL.
+
+    Raises:
+        TypeError: If level_set is not a list or contains non-numeric values.
+        ValueError: If level_set is empty, lacks 1, has levels outside (0,1], or is not in descending order.
+    """
+
     if not isinstance(level_set, list):
         raise TypeError("Level-set must be a list")
     if not level_set:
@@ -15,9 +26,19 @@ def validate_level_set(level_set:list[float]) -> None:
         raise ValueError("Levels must be in (0,1]")
     if level_set != sorted(level_set, reverse=True):
         raise ValueError("Levels must be in descending order")
-
-# Check if the RLs mapping is correct        
+     
 def validate_mapping(mapping:dict) -> None:
+    """
+    Validate an RLs dictionary mapping of levels to objects.
+
+    Args:
+        mapping (dict): Dictionary mapping levels to objects.
+
+    Raises:
+        TypeError: If mapping is not a dict or objects are not of the same type.
+        ValueError: If the level-set (keys) is invalid per validate_level_set.
+    """
+
     if not isinstance(mapping, dict):
         raise TypeError("Mapping must be a dictionary")
     # Verify the level-set
@@ -26,8 +47,18 @@ def validate_mapping(mapping:dict) -> None:
     if len({type(obj) for obj in mapping.values()}) != 1:
         raise TypeError("All instances must be of the same class")
 
-# Visualize RL in table format
 def rl_table(cls_name:str, mapping:dict) -> str:
+    """
+    Generate a table representation of an RL.
+
+    Args:
+        cls_name (str): Name of the class rlified by the RL.
+        mapping (dict): Dictionary mapping levels to objects.
+
+    Returns:
+        str: Formatted table string with levels and objects.
+    """
+
     # Compute max width for level column (including header)
     level_width = max(len(str(level)) for level in mapping) + 2
     level_width = max(level_width, len("Level"))
@@ -46,16 +77,19 @@ def rl_table(cls_name:str, mapping:dict) -> str:
 # Read RL from file
 def read_rl_input(input_file: str, process:Callable = None) -> dict:
     """
-    Read an RL from an input file, process the input strings if processing function
-    is provided.
+    Read an RL from an input file, optionally process inputs with given function.
     
     Args:
         input_file (str): Path to file with levels (space-separated) on first line, inputs on rest.
-        process (Callable): Function that processes the input into the desired format.
+        process (Callable, optional): Function that processes the input into the desired format.
 
     Returns:
-        output (dict): Dictionary with the input RL.
+        dict: Dictionary with the input RL.
+    
+    Raises:
+        ValueError: If file not found, empty, has invalid levels, or wrong number of inputs.    
     """
+
     # Validate input file existence
     if not os.path.isfile(input_file):
         raise ValueError(f"Input file not found: {input_file}")
@@ -87,10 +121,20 @@ def read_rl_input(input_file: str, process:Callable = None) -> dict:
     # Return RL as a dict
     return dict(zip(levels,inputs))
 
-# Fuzzy set {a : 0.8, b : 0.7, etc...} to RL {1: {}, 0.8 : {a}, etc...}
 def fuzzy_to_rl(fuzzy_set:dict) -> dict:
+    """
+    Convert a fuzzy set to an RL-set using alpha-cuts.
+
+    Args:
+        fuzzy_set (dict): Dictionary mapping elements to membership degrees.
+
+    Returns:
+        dict: Dictionary mapping levels to alpha-cuts.
+    """
+
     # Calculate the levelset Lambda as the union of the degrees with 1
     levelset = sorted(set(fuzzy_set.values()).union({1}), reverse=True)
+
     # Calculate the RL as a mapping of levels to alpha-cuts of the fuzzy set
     rl = {
         alpha : {elem for elem, deg in fuzzy_set.items() if deg >= alpha} 
@@ -98,8 +142,22 @@ def fuzzy_to_rl(fuzzy_set:dict) -> dict:
     }
     return rl
 
-# Obtain the fuzzy summary of an RL
 def rl_fuzzy_summary(rl:dict) -> dict:
+    """
+    Compute a fuzzy summary of an RL, mapping elements to membership degrees.
+
+    Args:
+        rl (dict): Dictionary of an RL mapping levels to sets of elements (crisp realizations).
+
+    Returns:
+        dict: Fuzzy set representing the fuzzy summary of the RL as a sorted dictionary 
+        mapping elements to membership degrees, descending by degree, then element.
+
+    Raises:
+        TypeError: If rl's keys are not a valid level-set per validate_level_set.
+        ValueError: If level-set is invalid.
+    """
+
     # Get all the elements as union of all the crisp realizations
     elements = set().union(*rl.values())
 
