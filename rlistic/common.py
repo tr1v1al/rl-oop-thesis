@@ -43,16 +43,19 @@ def rl_table(cls_name:str, mapping:dict) -> str:
         lines.append(f"{level:<{level_width}} | {str(obj):<{obj_width}}")
     return "\n".join(lines)
 
-# Fuzzy set {a : 0.8, b : 0.7, etc...} to RL {1: {}, 0.8 : {a}, etc...}
-def fuzzy_to_rl(fuzzy_set:dict) -> dict:
-    pass
-
-# Obtain fuzzy summary of an RL
-def rl_fuzzy_summary(rl:dict) -> dict:
-    pass
-
 # Read RL from file
 def read_rl_input(input_file: str, process:Callable = None) -> dict:
+    """
+    Read an RL from an input file, process the input strings if processing function
+    is provided.
+    
+    Args:
+        input_file (str): Path to file with levels (space-separated) on first line, inputs on rest.
+        process (Callable): Function that processes the input into the desired format.
+
+    Returns:
+        output (dict): Dictionary with the input RL.
+    """
     # Validate input file existence
     if not os.path.isfile(input_file):
         raise ValueError(f"Input file not found: {input_file}")
@@ -83,3 +86,39 @@ def read_rl_input(input_file: str, process:Callable = None) -> dict:
 
     # Return RL as a dict
     return dict(zip(levels,inputs))
+
+# Fuzzy set {a : 0.8, b : 0.7, etc...} to RL {1: {}, 0.8 : {a}, etc...}
+def fuzzy_to_rl(fuzzy_set:dict) -> dict:
+    # Calculate the levelset Lambda as the union of the degrees with 1
+    levelset = sorted(set(fuzzy_set.values()).union({1}), reverse=True)
+    # Calculate the RL as a mapping of levels to alpha-cuts of the fuzzy set
+    rl = {
+        alpha : {elem for elem, deg in fuzzy_set.items() if deg >= alpha} 
+        for alpha in levelset
+    }
+    return rl
+
+# Obtain the fuzzy summary of an RL
+def rl_fuzzy_summary(rl:dict) -> dict:
+    # Get all the elements as union of all the crisp realizations
+    elements = set().union(*rl.values())
+
+    # Validate the level-set
+    levels = list(rl.keys())
+    validate_level_set(levels)
+
+    # Calculate the probability distribution w(alpha_i) = alpha_i - alpha_{i+1}
+    levels = levels + [0]
+    w = {
+        levels[ind] : levels[ind] - levels[ind+1]
+        for ind in range(len(levels)-1)
+    }
+
+    # For each element, calculate its presence in the RL
+    summary = {
+        el : sum(w[alpha] for alpha, rho_alpha in rl.items() if el in rho_alpha) 
+        for el in elements
+    }
+    
+    # Sort by degree descending, then by element for ties
+    return dict(sorted(summary.items(), key=lambda x: (-x[1], x[0])))
