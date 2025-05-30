@@ -3,13 +3,13 @@ from functools import partial
 from .common import validate_mapping, rl_table
 
 # Common special methods to be added to RL class
-SPECIAL_METHODS = [
+SPECIAL_METHODS = {
     '__and__', '__or__',
     '__neg__', '__pos__', '__abs__',  # Unary
     '__add__', '__sub__', '__mul__', '__truediv__',  # Binary
     '__len__', '__getitem__', '__setitem__', '__delitem__',  # Container
     '__call__', '__enter__', '__exit__',  # Callable/context
-]
+}
 
 # Metaclass for our RL class
 class RLMeta(type):
@@ -50,6 +50,11 @@ class RL(metaclass=RLMeta):
     @property
     def instance_class(self):
         return self.__instance_class
+    
+    # Get the mapping of the RL
+    @property
+    def mapping(self):
+        return self.__mapping
 
     # Combine levels of this RL and other RLs passed as parameters
     def __combine_levels(self, *args, **kwargs):
@@ -146,6 +151,36 @@ class RL(metaclass=RLMeta):
     def __str__(self):
         return rl_table(self.instance_class.__name__, self.__mapping)
 
+# Add new magic methods to the RL class
+def add_magic_methods(method_names: list[str]) -> None:
+    """Add magic methods to the RL class dynamically.
+    
+    Args:
+        method_names: List of magic method names (e.g., ['__eq__', '__lt__']).
+        
+    Raises:
+        ValueError: If any method name is invalid (not starting/ending with '__').
+        TypeError: If method_names is not a list or contains non-string elements.
+    """
+
+    # Error handling
+    if not isinstance(method_names, list):
+        raise TypeError("method_names must be a list")
+    if not all(isinstance(name, str) for name in method_names):
+        raise TypeError("All method names must be strings")
+    if not all(name.startswith('__') and name.endswith('__') for name in method_names):
+        raise ValueError("All method names must be magic methods (start and end with '__')")
+    
+    # Update SPECIAL_METHODS
+    global SPECIAL_METHODS
+    SPECIAL_METHODS.update(method_names)
+    
+    # Add methods to existing RL class
+    for method_name in method_names:
+        if method_name not in RL.__dict__:
+            setattr(RL, method_name, RLMeta.make_special_method(method_name))
+
+
 # Run with python -m rlistic.proxy
 if __name__ == '__main__':
     class A:
@@ -154,6 +189,8 @@ if __name__ == '__main__':
         def __add__(self, other):
             print("called add in A")
             return A(self.val+other.val)
+        def __pow__(self, power):
+            return A(self.val**power.val)
         def __neg__(self):
             return A(-self.val)
         def bruh(self, o1, o2, o3, o4):
@@ -173,6 +210,11 @@ if __name__ == '__main__':
     rla2 = RL({1: A(3), 0.6: A(2)})
     rla3 = RL({1: A(100), 0.3: A(55)})
     rla4 = RL({1: A(53), 0.7: A(1), 0.3: A(43), 0.2: A(10), 0.1: A(22)})
+
+    print(dir(RL))
+    add_magic_methods(['__pow__'])
+    print(rla1**rla2)
+    print(dir(RL))
 
     # Integers
     rla5 = RL({1: 3, 0.6: 2})
@@ -258,6 +300,8 @@ if __name__ == '__main__':
     print("Around half of A is in B")
     print(rl_myset1.around_half_in(rl_myset2))
     
+
+
     # More A than B in C
     # RL-int
     # Level | Object
