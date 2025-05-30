@@ -35,10 +35,10 @@ def output_rl_to_set(output_rl:dict) -> dict:
 if __name__ == '__main__':
     # Students and their grades
     student_grades = {
-        "Alberto" : 9.5, "Fernando" : 9.2,
-        "Marta" : 8, "Jesus" : 7.5,
-        "Jose" : 9, "Maria" : 9.5,
-        "Antonio" : 5
+        "Alberto" : 9.5, "Fernando" : 9.2, "Nacho" : 9.7,
+        "Marta" : 9, "Jesus" : 8.5, "Pepe" : 8,
+        "Jose" : 7.5, "Maria" : 7.5, "Manuel" : 5,
+        "Antonio" : 5, "Alfonso" : 5, "Pedro" : 5
     }
 
     # Obtain the 'good student' fuzzy set
@@ -64,3 +64,23 @@ if __name__ == '__main__':
 
     # Print the fuzzy summary
     print("\nFuzzy summary:", rl_fuzzy_summary(output_rl))
+
+# $ python -m examples.good_students_rlprogram
+
+# Input RL:  RL-set
+# Level  | Object
+# -------+------------------------------------------------------------------------------
+# 1.0    | {'Alberto', 'Nacho', 'Marta', 'Fernando'}
+# 0.75   | {'Jesus', 'Marta', 'Alberto', 'Fernando', 'Nacho'}
+# 0.5    | {'Jesus', 'Marta', 'Alberto', 'Pepe', 'Fernando', 'Nacho'}
+# 0.25   | {'Jesus', 'Marta', 'Alberto', 'Jose', 'Pepe', 'Maria', 'Fernando', 'Nacho'}
+
+# Output RL:  RL-set
+# Level  | Object
+# -------+---------
+# 1.0    | {2}
+# 0.75   | set()
+# 0.5    | {2, 3}
+# 0.25   | {2, 4}
+
+# Fuzzy summary: {2: 0.75, 3: 0.25, 4: 0.25}
