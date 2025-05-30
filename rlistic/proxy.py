@@ -273,7 +273,7 @@ def add_magic_methods(method_names: list[str]) -> None:
     global SPECIAL_METHODS
     SPECIAL_METHODS.update(method_names)
     
-    # Add methods to existing RL class
+    # Add methods to existing RL class using RLMeta's dunder method factory
     for method_name in method_names:
         if method_name not in RL.__dict__:
             setattr(RL, method_name, RLMeta.make_special_method(method_name))
