@@ -1,6 +1,7 @@
 from copy import deepcopy
 from functools import partial
 from .common import validate_mapping, rl_table
+from typing import Callable
 
 # Common special methods to be added to RL class
 SPECIAL_METHODS = {
@@ -11,53 +12,125 @@ SPECIAL_METHODS = {
     '__call__', '__enter__', '__exit__',  # Callable/context
 }
 
-# Metaclass for our RL class
 class RLMeta(type):
-    # Special method factory
+    """ 
+    Metaclass for RL class to dynamically add dunder methods to the RL
+    class's definition when creating it. 
+    """
+
     @staticmethod
-    def make_special_method(method_name):
+    def make_special_method(method_name: str) -> Callable:
+        """
+        Factory for producing dunder methods for the RL class. The dunder methods
+        delegate to the RL's general_method, same as regular methods.
+
+        Args:
+            method_name (str): Name of the special method (e.g., '__add__').
+
+        Returns:
+            Callable: Method that calls general_method with the given method_name.
+        """
+
         def special_method(self, *args, **kwargs):
-            # Use general_method from RL class
+            # Delegate to RL's general_method for RL-behaviour
             return self.general_method(method_name, *args, **kwargs)
+        
         return special_method
     
-    # Add special methods to the class when creating it
     def __new__(cls, name, bases, attrs):
+        """
+        Create the RL class with dunder methods provided in SPECIAL_METHODS.
+
+        Args:
+            cls: Like self, but the object being instantiated here is a class.
+            name (str): Name of the class.
+            bases (tuple): Base classes.
+            attrs (dict): Class attributes.
+
+        Returns:
+            type: RL class with added dunder methods.
+        """
+        
+        # For each dunder method to be added, create the corresponding dunder 
+        # method using the make_special_method factory, then assign that
+        # method to the dictionary of attributes of the RL class.
         for method_name in SPECIAL_METHODS:
             attrs[method_name] = RLMeta.make_special_method(method_name)
         return super().__new__(cls, name, bases, attrs)
 
-# RL class for graduality management
 class RL(metaclass=RLMeta):
-    # Initialization
+    """
+    Proxy class for managing graduality using Representations by Levels (RLs).
+
+    Attributes:
+        __instance_class (type): Class of objects affected by graduality.
+        __mapping (dict): Dictionary mapping levels (floats in (0,1]) to objects.
+    """
+
     def __init__(self, mapping):
-        # Check for errors
+        
+        # Validate the level-set and the objects to rlify
         validate_mapping(mapping)
         
-        # Save class of instances and levels as private attributes
+        # Save the class of rlified objects and the mapping as private attributes
         self.__instance_class = type(mapping[1])
         self.__mapping = {alpha: deepcopy(obj) for alpha, obj in mapping.items()}
 
-    # Get the level set of the RL
-    def level_set(self):
+    def get_level_set(self):
+        """
+        Get the level-set of the RL.
+
+        Returns:
+            list[float]: Level-set.
+        """
         return list(self.__mapping.keys())
-    
-    # Get object at a given level or the provided default value
+ 
     def get_object(self, level, default=None):
+        """
+        Get the object at a given level or a default value.
+
+        Args:
+            level (float): Level to query.
+            default: Value to return if level is not found (default: None).
+
+        Returns:
+            object: Object at the level or default value.
+        """
         return self.__mapping.get(level, default) 
     
-    # Get the class wrapped in the RL
     @property
     def instance_class(self):
+        """
+        Get the class of objects wrapped in the RL.
+
+        Returns:
+            type: Class of the RL's objects.
+        """
+
         return self.__instance_class
     
-    # Get the mapping of the RL
     @property
     def mapping(self):
+        """
+        Get the internal RL mapping.
+
+        Returns:
+            dict: Mapping of levels to objects.
+        """
         return self.__mapping
 
-    # Combine levels of this RL and other RLs passed as parameters
-    def __combine_levels(self, *args, **kwargs):
+    def __combine_levels(self, *args, **kwargs) -> list[float]:
+        """
+        Combine levels from this RL and other RLs provided as arguments.
+
+        Args:
+            *args: RLs passed as positional arguments.
+            **kwargs: RLs passed as keyword arguments.
+
+        Returns:
+            list[float]: Combined levels in descending order.
+        """
+
         # Helper function for merging two ordered arrays (descending)
         def combine_levels_2lists(lvls1, lvls2):
             i1, i2, levels = 0, 0, []
@@ -73,23 +146,35 @@ class RL(metaclass=RLMeta):
             return levels        
         
         # Levels of self
-        levels = self.level_set()
+        levels = self.get_level_set()
 
         # Combine with levels from other RLs
         # Positional RL arguments
         for arg in args:
-            other = arg.level_set()
+            other = arg.get_level_set()
             levels = combine_levels_2lists(levels, other)
         
         # Keyword RL arguments
         for kwarg in kwargs.values():
-            other = kwarg.level_set()
+            other = kwarg.get_level_set()
             levels = combine_levels_2lists(levels, other)
 
         return levels
     
-    # Wrapper with RL logic for methods
-    def general_method(self, method_name, *args, **kwargs):
+    def general_method(self, method_name: str, *args, **kwargs):
+        """
+        Apply a method level-wise across RLs, aggregating the result in an RL.
+        Arguments can be RLs or crisp, the latter are extended to other levels.
+        The output is an RL or crisp, if the objects on all levels are equal.
+
+        Args:
+            method_name (str): Name of the method to apply (e.g., '__add__', 'union').
+            *args: Positional arguments, may include RLs or crisp objects.
+            **kwargs: Keyword arguments, may include RLs or crisp objects.
+
+        Returns:
+            RL or object: Resulting RL or crisp object (if same object on all levels).
+        """
         # RLify crisp arguments with list/dict comprehension
         # Positional arguments
         rl_args = [
@@ -140,20 +225,33 @@ class RL(metaclass=RLMeta):
         # Otherwise the mapping is empty and None is returned
         return RL(mapping) if len(mapping) > 1 else mapping[1]
 
-    # Dynamic method dispatch. 
-    # Intercept method calls when they are not defined in the class
-    def __getattr__(self, method_name):
-        # SKIP PROBLEMATIC DUNDERS. EXPLICIT LOOKUP IS CAUGHT BY GETATTR UNLIKE IMPLICIT
-        # Return wrapper with bound method name
+    def __getattr__(self, method_name: str) -> Callable:
+        """
+        Dynamically dispatch undefined method calls to general_method.
+
+        Args:
+            method_name (str): Name of the method being accessed.
+
+        Returns:
+            Callable: Partial function bound to general_method.
+        """
+
+        # Return general_method with bound method name
         return partial(self.general_method, method_name)
 
-    # String representation of an RL
-    def __str__(self):
-        return rl_table(self.instance_class.__name__, self.__mapping)
+    def __str__(self) -> str:
+        """
+        Get a string representation of the RL as a table.
 
-# Add new magic methods to the RL class
+        Returns:
+            str: Table formatted by rl_table showing levels and objects.
+        """
+
+        return rl_table(self.instance_class.__name__, self.mapping)
+
 def add_magic_methods(method_names: list[str]) -> None:
-    """Add magic methods to the RL class dynamically.
+    """
+    Add magic methods to the RL class dynamically.
     
     Args:
         method_names: List of magic method names (e.g., ['__eq__', '__lt__']).
