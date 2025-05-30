@@ -132,8 +132,8 @@ def fuzzy_to_rl(fuzzy_set:dict) -> dict:
         dict: Dictionary mapping levels to alpha-cuts.
     """
 
-    # Calculate the levelset Lambda as the union of the degrees with 1
-    levelset = sorted(set(fuzzy_set.values()).union({1}), reverse=True)
+    # Calculate the levelset Lambda as the union of the degrees with 1 and without 0
+    levelset = sorted(set(fuzzy_set.values()).union({1}).difference({0}), reverse=True)
 
     # Calculate the RL as a mapping of levels to alpha-cuts of the fuzzy set
     rl = {
