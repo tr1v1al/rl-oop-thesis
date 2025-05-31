@@ -76,7 +76,7 @@ class RL(metaclass=RLMeta):
         self.__instance_class = type(mapping[1])
         self.__mapping = {alpha: deepcopy(obj) for alpha, obj in mapping.items()}
 
-    def get_level_set(self):
+    def get_level_set(self) -> list[float]:
         """
         Get the level-set of the RL.
 
@@ -99,7 +99,7 @@ class RL(metaclass=RLMeta):
         return self.mapping.get(level, default) 
     
     @property
-    def instance_class(self):
+    def instance_class(self) -> type:
         """
         Get the class of objects wrapped in the RL.
 
@@ -110,7 +110,7 @@ class RL(metaclass=RLMeta):
         return self.__instance_class
     
     @property
-    def mapping(self):
+    def mapping(self) -> dict:
         """
         Get the internal RL mapping.
 
