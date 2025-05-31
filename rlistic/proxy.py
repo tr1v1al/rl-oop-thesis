@@ -67,7 +67,7 @@ class RL(metaclass=RLMeta):
         __mapping (dict): Dictionary mapping levels (floats in (0,1]) to objects.
     """
 
-    def __init__(self, mapping):
+    def __init__(self, mapping: dict):
         
         # Validate the level-set and the objects to rlify
         validate_mapping(mapping)
@@ -83,7 +83,7 @@ class RL(metaclass=RLMeta):
         Returns:
             list[float]: Level-set.
         """
-        return list(self.__mapping.keys())
+        return list(self.mapping.keys())
  
     def get_object(self, level, default=None):
         """
@@ -96,7 +96,7 @@ class RL(metaclass=RLMeta):
         Returns:
             object: Object at the level or default value.
         """
-        return self.__mapping.get(level, default) 
+        return self.mapping.get(level, default) 
     
     @property
     def instance_class(self):

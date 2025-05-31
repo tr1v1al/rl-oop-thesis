@@ -29,8 +29,8 @@ class TestProxy(unittest.TestCase):
 
     def test_level_set(self):
         """Test level_set method."""
-        self.assertEqual(self.rl1.level_set(), [1.0, 0.7])
-        self.assertEqual(self.rl2.level_set(), [1.0, 0.8])
+        self.assertEqual(self.rl1.get_level_set(), [1.0, 0.7])
+        self.assertEqual(self.rl2.get_level_set(), [1.0, 0.8])
 
     def test_get_object(self):
         """Test get_object method."""
