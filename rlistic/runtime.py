@@ -203,15 +203,29 @@ class _RLBase:
         return rl_table(type(self)._instance_class.__name__, self.mapping)
 
 
-def rlify(original_class) -> type:
+def rlify(original_class: type) -> type:
+    """
+    Funcittion that rlifies a given class.
+    
+    Args:
+        original_class (type): Class to be rlified.
+
+    Returns:
+        type: Corresponding RL class.
+    """
+
+    # Check if input is a class
     if not isinstance(original_class, type):
         raise TypeError("original_class must be a class")
 
+    # If the class has already been rlified, return the entry from the registry
     if original_class in RL_REGISTRY:
         return RL_REGISTRY[original_class]
 
+    # Get the class's name
     class_name = original_class.__name__
 
+    # 
     def make_method(method_name):
         def method(self, *args, **kwargs):
             return self.general_method(method_name, *args, **kwargs)
