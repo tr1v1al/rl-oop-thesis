@@ -247,6 +247,8 @@ class A:
 
     def __sub__(self, other):
         return self.val - other.val
+    def mymethod(self, other=66):
+        return A(self.val + 10 + other)
     def __str__(self):
         return str(self.val)
 
@@ -265,3 +267,5 @@ rlint2 = RLint({1:5, 0.7: 3})
 print(rlint1*rlint2)
 print(dir())
 # rla3 = RLA({1: 1, 0.8 : 5})
+
+print(rla1.mymethod())
