@@ -225,25 +225,38 @@ def rlify(original_class: type) -> type:
     # Get the class's name
     class_name = original_class.__name__
 
-    # 
+    # Method factory for the RL class
+    # Returns a method that delegates to general_method with given method_name
     def make_method(method_name):
         def method(self, *args, **kwargs):
             return self.general_method(method_name, *args, **kwargs)
         return method
 
-    attrs = {}
+    # Dictionary of the attributes of the RL class
+    # Class attribute _instance_class is set to the original_class
+    # being rlified, binding the produced RL class to it.
+    attrs = {'_instance_class': original_class}
 
+    # Add all the original class's methods to the RL class. Iterate over attributes.
     for method_name in dir(original_class):
+        # Ignore unwanted magic methods
         if method_name in ignore_methods:
             continue
+        # Get the attribute, if it is callable, add it with the method factory
         method = getattr(original_class, method_name)
         if not callable(method):
             continue
         attrs[method_name] = make_method(method_name)
 
+    # Dynamically create the RL class with type. The RL class will have the name
+    # RLoriginalclassname, it will inherit from _RLBase, and have the attributes
+    # we copied from the original class
     RLClass = type(f"RL{class_name}", (_RLBase,), attrs)
-    RLClass._instance_class = original_class  # Changed from __instance_class
+    
+    # Add newly created RL class to the RL registry
     RL_REGISTRY[original_class] = RLClass
+
+    # Return it
     return RLClass
 
 
