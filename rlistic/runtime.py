@@ -1,5 +1,5 @@
 from copy import deepcopy
-from rlistic.common import validate_mapping, rl_table
+from .common import validate_mapping, rl_table
 
 # Registry for RL classes. All created RL classes have an entry here.
 # Unless explicitly rlified by the user, an RL class is not injected
