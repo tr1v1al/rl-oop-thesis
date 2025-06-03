@@ -3,7 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 from rlistic.rlprogram import rlify_program, run_program
-from rlistic.common import rl_table, read_rl_input
+from rlistic.common import rl_table, rl_input
 
 class TestRLProgram(unittest.TestCase):
     def setUp(self):
@@ -49,7 +49,7 @@ print(f"Processed: {data}")
         """Test rlify_program with sequential execution (nproc=1)."""
         mock_script_path = str(Path(self.mock_script).resolve())
         command = ["python", mock_script_path]
-        input_rl = read_rl_input(self.input_file)
+        input_rl = rl_input(self.input_file)
         result = rlify_program(command, input_rl, nproc=1)
         expected = {1.0: "Processed: input1", 0.8: "Processed: input2"}
         self.assertEqual(result, expected)
@@ -62,7 +62,7 @@ print(f"Processed: {data}")
         """Test rlify_program with multiprocessing (nproc=-1)."""
         mock_script_path = str(Path(self.mock_script).resolve())
         command = ["python", mock_script_path]
-        input_rl = read_rl_input(self.input_file)
+        input_rl = rl_input(self.input_file)
         result = rlify_program(command, input_rl, nproc=-1)
         expected = {1.0: "Processed: input1", 0.8: "Processed: input2"}
         self.assertEqual(result, expected)
@@ -72,7 +72,7 @@ print(f"Processed: {data}")
         mock_script_path = str(Path(self.mock_script).resolve())
         command = ["python", mock_script_path]
         with self.assertRaises(ValueError) as cm:
-            read_rl_input(os.path.join(self.temp_path, "nonexistent.txt"))
+            rl_input(os.path.join(self.temp_path, "nonexistent.txt"))
         self.assertEqual(str(cm.exception), "Input file not found: " + os.path.join(self.temp_path, "nonexistent.txt"))
 
     def test_invalid_levels(self):
@@ -80,7 +80,7 @@ print(f"Processed: {data}")
         mock_script_path = str(Path(self.mock_script).resolve())
         command = ["python", mock_script_path]
         with self.assertRaises(ValueError) as cm:
-            input_rl = read_rl_input(self.invalid_level_file)
+            input_rl = rl_input(self.invalid_level_file)
             rlify_program(command, input_rl)
         self.assertIn("Levels must be in (0,1]", str(cm.exception))
 
@@ -89,7 +89,7 @@ print(f"Processed: {data}")
         mock_script_path = str(Path(self.mock_script).resolve())
         command = ["python", mock_script_path]
         with self.assertRaises(ValueError) as cm:
-            input_rl = read_rl_input(self.mismatch_file)
+            input_rl = rl_input(self.mismatch_file)
             rlify_program(command, input_rl)
         self.assertIn("Input file must have 2 input lines, got 1", str(cm.exception))
 
