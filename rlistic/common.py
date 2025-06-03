@@ -75,7 +75,7 @@ def rl_table(cls_name:str, mapping:dict) -> str:
     return "\n".join(lines)
 
 # Read RL from file
-def read_rl_input(input_file: str, process:Callable = None) -> dict:
+def rl_input(input_file: str, process:Callable = None) -> dict:
     """
     Read an RL from an input file, optionally process inputs with given function.
     

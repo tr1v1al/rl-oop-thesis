@@ -4,7 +4,7 @@ import sys
 import argparse
 import multiprocessing
 import time
-from .common import rl_table, read_rl_input
+from .common import rl_table, rl_input
 
 def run_program(command: list[str], inp: str) -> str:
     """
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         # Split command string into list
         command_list = shlex.split(args.command)
         # Read input
-        rl_input = read_rl_input(args.input)
+        rl_input = rl_input(args.input)
         # Call rlify_program, get the output and measure the time
         start_time = time.time()  # Start timing
         output = rlify_program(command_list, rl_input, args.nproc)
