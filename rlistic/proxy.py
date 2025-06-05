@@ -37,13 +37,13 @@ class RLMeta(type):
         
         return special_method
     
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         """
         Create the RL class with dunder methods provided in SPECIAL_METHODS.
 
         Args:
-            cls: Like self, but the object being instantiated here is a class.
-            name (str): Name of the class.
+            mcs: The metaclass.
+            name (str): Name of the class being constructed.
             bases (tuple): Base classes.
             attrs (dict): Class attributes.
 
@@ -56,7 +56,7 @@ class RLMeta(type):
         # method to the dictionary of attributes of the RL class.
         for method_name in SPECIAL_METHODS:
             attrs[method_name] = RLMeta.make_special_method(method_name)
-        return super().__new__(cls, name, bases, attrs)
+        return super().__new__(mcs, name, bases, attrs)
 
 class RL(metaclass=RLMeta):
     """
