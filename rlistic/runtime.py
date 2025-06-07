@@ -170,7 +170,10 @@ class _RLBase:
             }
             # Operate with arguments at the current level. Retrieve the method_name method
             # for self and then call it with positional and keyword arguments
-            curr = getattr(curr_self, method_name)(*curr_args, **curr_kwargs)
+            try:
+                curr = getattr(curr_self, method_name)(*curr_args, **curr_kwargs)
+            except Exception as e:
+                raise type(e)(f"Error in {self.__class__.__name__} at level {level}: {e}") from e
 
             # Add to mapping only if the object is on level 1
             # or not the same as on the previous level
@@ -258,41 +261,3 @@ def rlify(original_class: type) -> type:
 
     # Return it
     return RLClass
-
-
-# TESTEO
-
-class A:
-    def __init__(self, val):
-        self.val = val
-
-    def __add__(self, other):
-        return A(self.val + other.val)
-
-    def __mul__(self, other):
-        return A(self.val*other)
-
-    def __sub__(self, other):
-        return self.val - other.val
-    def mymethod(self, other=66):
-        return A(self.val + 10 + other)
-    def __str__(self):
-        return str(self.val)
-
-RLA = rlify(A)
-
-rla1 = RLA({1: A(10), 0.8: A(3)})
-rla2 = RLA({1: A(5), 0.7: A(66)})
-print(RL_REGISTRY)
-print(rla1+rla2)
-print(rla1*10)
-print(rla1 - rla2)
-RLint = rlify(int)
-print(RL_REGISTRY)
-rlint1 = RLint({1:10, 0.8: 5})
-rlint2 = RLint({1:5, 0.7: 3})
-print(rlint1*rlint2)
-print(dir())
-# rla3 = RLA({1: 1, 0.8 : 5})
-
-print(rla1.mymethod())
