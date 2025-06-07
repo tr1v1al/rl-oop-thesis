@@ -299,7 +299,7 @@ def rlify_class(node: ast.ClassDef) -> tuple[str, str]:
                 returns=None
             )
 
-            # Needed 
+            # Needed for AST to work
             ast.fix_missing_locations(rl_method)
             # Add the method to the list of RL methods
             rl_methods.append(rl_method)
@@ -337,8 +337,6 @@ def transform_file(input_path: str, output_path: str) -> None:
         input_path (str): Path to input file with original classes.
         output_path (str): Path to output file where RL classes will be written.
     """
-    # Reset RL_REGISTRY to avoid conflicts from previous runs
-    RL_REGISTRY.clear()
 
     # Check if exists
     if not os.path.exists(input_path):

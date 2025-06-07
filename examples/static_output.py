@@ -15,10 +15,16 @@ class B:
     def __init__(self, val):
         self.val = val
 
-    def combine(self, other, y=A(1)):
+    def combine(self, other, y=A(1), *args, **kwargs):
+        """"
+        Method with a complicated signature that returns
+        an object of another class
+        """
         if not isinstance(y, A):
             raise TypeError('y must be of class A')
-        return A(self.val + other.val + y.val)
+        arg_sum = sum([arg.val for arg in args])
+        kwarg_sum = sum([kwarg.val for kwarg in kwargs.values()])
+        return A(self.val + other.val + y.val + arg_sum + kwarg_sum)
 
     def __str__(self):
         return str(self.val)
@@ -31,8 +37,8 @@ class RLA(_RLBase):
 class RLB(_RLBase):
     _instance_class = B
 
-    def combine(self, other, y=A(1)):
-        return self.general_method('combine', other, y)
+    def combine(self, other, y=A(1), *args, **kwargs):
+        return self.general_method('combine', other, y, *args, **kwargs)
 
 RL_REGISTRY[A] = RLA
 RL_REGISTRY[B] = RLB
