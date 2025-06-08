@@ -1,7 +1,7 @@
 import sys
 
 def group_sizes(students: set) -> set[int]:
-    """ Return proper divisors of cardinal of students """
+    """ Return the proper divisors of the scardinality of students """
     n = len(students)
     return {str(d) for d in range(2, n) if n % d == 0}
 

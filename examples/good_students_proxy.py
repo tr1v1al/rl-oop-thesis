@@ -1,4 +1,4 @@
-from rlistic.common import fuzzy_to_rl, rl_fuzzy_summary, rl_table
+from rlistic.common import fuzzy_to_rl, rl_fuzzy_summary
 from rlistic.proxy import RL
 
 class StudentsSet(set):

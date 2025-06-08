@@ -36,9 +36,9 @@ if __name__ == '__main__':
     # Students and their grades
     student_grades = {
         "Alberto" : 9.5, "Fernando" : 9.2, "Nacho" : 9.7,
-        "Marta" : 9, "Jesus" : 8.5, "Pepe" : 8,
-        "Jose" : 7.5, "Maria" : 7.5, "Manuel" : 5,
-        "Antonio" : 5, "Alfonso" : 5, "Pedro" : 5
+        "Marta" : 9, "Jesus" : 8.5, "Pepe" : 8.5,
+        "Jose" : 8, "Maria" : 8, "Manuel" : 7.5,
+        "Antonio" : 7.5, "Alfonso" : 5, "Pedro" : 5
     }
 
     # Obtain the 'good student' fuzzy set
@@ -69,18 +69,18 @@ if __name__ == '__main__':
 
 # Input RL:  RL-set
 # Level  | Object
-# -------+------------------------------------------------------------------------------
-# 1.0    | {'Alberto', 'Nacho', 'Marta', 'Fernando'}
-# 0.75   | {'Jesus', 'Marta', 'Alberto', 'Fernando', 'Nacho'}
-# 0.5    | {'Jesus', 'Marta', 'Alberto', 'Pepe', 'Fernando', 'Nacho'}
-# 0.25   | {'Jesus', 'Marta', 'Alberto', 'Jose', 'Pepe', 'Maria', 'Fernando', 'Nacho'}
+# -------+---------------------------------------------------------------------------------------------------
+# 1.0    | {'Alberto', 'Nacho', 'Fernando', 'Marta'}
+# 0.75   | {'Alberto', 'Fernando', 'Marta', 'Jesus', 'Pepe', 'Nacho'}
+# 0.5    | {'Alberto', 'Maria', 'Fernando', 'Marta', 'Jesus', 'Pepe', 'Nacho', 'Jose'}
+# 0.25   | {'Alberto', 'Manuel', 'Maria', 'Antonio', 'Fernando', 'Marta', 'Jesus', 'Pepe', 'Nacho', 'Jose'}  
 
 # Output RL:  RL-set
-# Level  | Object
+# Level  | Object   
 # -------+---------
 # 1.0    | {2}
-# 0.75   | set()
-# 0.5    | {2, 3}
-# 0.25   | {2, 4}
+# 0.75   | {2, 3}
+# 0.5    | {2, 4}
+# 0.25   | {2, 5}
 
-# Fuzzy summary: {2: 0.75, 3: 0.25, 4: 0.25}
+# Fuzzy summary: {2: 1.0, 3: 0.25, 4: 0.25, 5: 0.25}
