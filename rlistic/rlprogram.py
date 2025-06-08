@@ -33,7 +33,7 @@ def run_program(command: list[str], inp: str) -> str:
 
 def rlify_program(command: list[str], input_rl: dict, nproc: int = -1) -> dict:
     """
-    Run a program for each level of the RL, aggregate the output in a table representing the RL.
+    Run a program for each level of the RL, aggregate the output in a dictionary representing the RL.
     
     Args:
         command (list[str]): Command list (e.g., ['python', 'program.py']).
@@ -41,7 +41,7 @@ def rlify_program(command: list[str], input_rl: dict, nproc: int = -1) -> dict:
         nproc (int): Number of processes (-1: all CPUs, 1: sequential, >1: specific count).
 
     Returns:
-        dict: Dictionary with the output RL.
+        dict or object: Dictionary with the output RL.
     """
     
     # Execute sequentially or with multiprocessing depending on nproc
@@ -62,10 +62,15 @@ def rlify_program(command: list[str], input_rl: dict, nproc: int = -1) -> dict:
         with multiprocessing.Pool(processes=nproc) as pool:
             results = pool.starmap(run_program, [(command, inp) for inp in inputs])
     
-    # Zip levels and output into a dictionary
-    mapping = dict(zip(levels, results))
+    # Zip levels and output into a mapping dictionary, squashing results
+    prev, mapping = None, {}
+    for level, result in zip(levels, results):
+        if level == 1 or result != prev:
+            mapping[level] = result
+        prev = result
     
-    return mapping
+    # Return RL or crisp object if there is only 1 level
+    return mapping if len(mapping) > 1 else mapping[1]
 
 # Run with python -m rlistic.rlprogram
 if __name__ == "__main__":
@@ -86,8 +91,11 @@ if __name__ == "__main__":
         start_time = time.time()  # Start timing
         output = rlify_program(command_list, rl_input, args.nproc)
         end_time = time.time()  # End timing
-        # Print table with the output RL
-        print(rl_table("Program", output))
+        # Print table with the output RL, or the object if crisp
+        if isinstance(output, dict):
+            print(rl_table("Program", output))
+        else:
+            print("Crisp output:\n", output)
         print(f"Execution time: {end_time - start_time:.3f} seconds")  # Print elapsed time
     except ValueError as e:
         print(f"Error: {e}")
