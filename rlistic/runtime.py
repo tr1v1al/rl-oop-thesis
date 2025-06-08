@@ -170,6 +170,7 @@ class _RLBase:
             }
             # Operate with arguments at the current level. Retrieve the method_name method
             # for self and then call it with positional and keyword arguments
+            # If an error occurs, it is caught and the message is prepended
             try:
                 curr = getattr(curr_self, method_name)(*curr_args, **curr_kwargs)
             except Exception as e:
