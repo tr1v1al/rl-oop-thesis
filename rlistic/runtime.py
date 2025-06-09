@@ -1,4 +1,3 @@
-from copy import deepcopy
 from .common import validate_mapping, rl_table
 
 # Registry for RL classes. All created RL classes have an entry here.
@@ -30,7 +29,7 @@ class _RLBase:
             raise TypeError(f"All mapping values must be instances of {type(self)._instance_class.__name__}")
         
         # Save the mapping of levels to objects
-        self.__mapping = {alpha: deepcopy(obj) for alpha, obj in mapping.items()}
+        self.__mapping = mapping
 
     @property
     def mapping(self) -> dict:

@@ -1,4 +1,3 @@
-from copy import deepcopy
 from functools import partial
 from .common import validate_mapping, rl_table
 from typing import Callable
@@ -9,7 +8,8 @@ SPECIAL_METHODS = {
     '__and__', '__or__',    # Logical
     '__neg__', '__pos__', '__abs__',  # Unary
     '__add__', '__sub__', '__mul__', '__truediv__',  # Binary
-    '__len__', '__getitem__', '__setitem__', '__delitem__',  # Container
+    '__lt__','__gt__', '__eq__', # Comparison
+    '__len__', '__getitem__' # Container
 }
 
 class RLMeta(type):
@@ -74,7 +74,7 @@ class RL(metaclass=RLMeta):
         
         # Save the class of rlified objects and the mapping as private attributes
         self.__instance_class = type(mapping[1])
-        self.__mapping = {alpha: deepcopy(obj) for alpha, obj in mapping.items()}
+        self.__mapping = mapping
 
     def get_level_set(self) -> list[float]:
         """
