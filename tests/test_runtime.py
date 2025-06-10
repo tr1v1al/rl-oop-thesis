@@ -127,8 +127,8 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(def_test.mapping, exp)
 
     def test_explicit_magic_methods(self):
-        """"Test explicit magic methods not defined for RL"""
-        # Modulus of RL-ints
+        """"Test explicit magic methods"""
+        # Not equality of RL-ints
         RLbool = rlify(bool)
         neq = self.rlint1.__ne__(self.rlint2)
         exp_neq = {1: False, 0.8: True}
