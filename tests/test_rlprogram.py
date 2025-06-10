@@ -19,6 +19,14 @@ data = sys.stdin.read().strip()
 print(f"Processed: {data}")
 ''')
 
+        # Create mock executable Python script with same output
+        self.same_script = os.path.join(self.temp_path, "same_program.py")
+        with open(self.same_script, "w") as f:
+            f.write('''import sys
+data = sys.stdin.read().strip()
+print(f"Processed: same_output")
+''')
+            
         # Create valid input file
         self.input_file = os.path.join(self.temp_path, "inputs.txt")
         with open(self.input_file, "w") as f:
@@ -92,6 +100,15 @@ print(f"Processed: {data}")
             input_rl = rl_input(self.mismatch_file)
             rlify_program(command, input_rl)
         self.assertIn("Input file must have 2 input lines, got 1", str(cm.exception))
+
+    def test_squash_crisp(self):
+        """Test rlify_program with multiprocessing (nproc=-1)."""
+        same_script_path = str(Path(self.same_script).resolve())
+        command = ["python", same_script_path]
+        input_rl = rl_input(self.input_file)
+        result = rlify_program(command, input_rl, nproc=-1)
+        expected = "Processed: same_output"
+        self.assertEqual(result, expected)
 
 if __name__ == "__main__":
     unittest.main()

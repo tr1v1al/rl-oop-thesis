@@ -1,116 +1,139 @@
 import unittest
 from rlistic.runtime import rlify, RL_REGISTRY
 
-class A:
+# Custom class with method with complicated signatures
+class ComplicatedClass:
     def __init__(self, val):
         self.val = val
-    
-    def __add__(self, other):
-        return A(self.val + other.val)
-    
-    def __sub__(self, other):
-        return self.val - other.val
+    def method(self, a, /, b : int = 7, *args: tuple[int], c:int, **kwargs: dict[str,int]):
+        """
+        Complicated method with positional-only args (a), args with default params (b),
+        arbitrary positional args, keyword only args (c), and arbitrary kwargs
+        """
+        return self.val+a.val+b+c+sum(args)+sum(kwargs.values())
 
-class MySet(set):
-    def union(self, other):
-        return OtherSet(set.union(self, other))
-
-class OtherSet(set):
+# Child class to test inheritance
+class ChildClass(ComplicatedClass):
     pass
 
-class TestStatic(unittest.TestCase):
+class TestRuntime(unittest.TestCase):
     def setUp(self):
-        # Clear RL_REGISTRY before each test to avoid interference
-        RL_REGISTRY.clear()
+        # Built-in int and set
+        RLint, RLset = rlify(int), rlify(set)
+        self.rlint1 = RLint({1: 5, 0.8: 3})
+        self.rlint2 = RLint({1: 5, 0.7 : 4})
+        self.rlset1 = RLset({1: {'a','b'}, 0.8: {'c'}})
+        self.rlset2 = RLset({1: {'c'}, 0.7 : {'a','c','d'}})
+        # Custom class
+        RLComplicatedClass = rlify(ComplicatedClass)
+        self.rlcomp1 = RLComplicatedClass({1: ComplicatedClass(5), 0.8: ComplicatedClass(10)})
+        self.rlcomp2 = RLComplicatedClass({1: ComplicatedClass(3), 0.7: ComplicatedClass(2)})
 
-    def test_instantiation(self):
-        """Test RLA instantiation with valid mapping and _instance_class."""
-        RLA = rlify(A)
-        rla = RLA({1.0: A(10), 0.8: A(3)})
-        self.assertEqual(RLA._instance_class, A)
-        #self.assertEqual(rla.mapping, {1.0: A(10), 0.8: A(3)})
-        self.assertIsInstance(rla, RLA)
-        self.assertIn(A, RL_REGISTRY)
+    def test_regular_methods(self):
+        """Test regular methods"""
+        RLset = rlify(set)
+        union = self.rlset1.union(self.rlset2)
+        exp_union = {1: {'a','b','c'}, 0.8: {'c'}, 0.7: {'a','c','d'}}
+        self.assertIsInstance(union, RLset)
+        self.assertEqual(union.mapping, exp_union)
 
-    def test_type_validation(self):
-        """Test TypeError for mappings with incorrect types."""
-        RLA = rlify(A)
-        with self.assertRaises(TypeError):
-            RLA({1.0: MySet({"a"}), 0.8: A(3)})  # Wrong type
-        with self.assertRaises(TypeError):
-            RLA({1.0: "invalid", 0.8: A(3)})  # Non-A object
+    def test_magic_methods(self):
+        """Test magic methods""" 
+        RLint, RLset = rlify(int), rlify(set)
+        # Add RL-ints
+        sum = self.rlint1+self.rlint2
+        exp_sum = {1: 10, 0.8: 8, 0.7: 7}
+        self.assertIsInstance(sum, RLint)
+        self.assertEqual(sum.mapping, exp_sum)
+        # Union of RL-sets
+        union = self.rlset1 | self.rlset2
+        exp_union = {1: {'a','b','c'}, 0.8: {'c'}, 0.7: {'a','c','d'}}
+        self.assertIsInstance(union, RLset)
+        self.assertEqual(union.mapping, exp_union)
 
-    def test_add_operation(self):
-        """Test __add__ operation returning RLA."""
-        RLA = rlify(A)
-        rla1 = RLA({1.0: A(10), 0.8: A(3)})
-        rla2 = RLA({1.0: A(5), 0.7: A(2)})
-        result = rla1 + rla2
-        self.assertIsInstance(result, RLA)
-        self.assertEqual(result.mapping[1.0].val, 15)  # 10 + 5
-        self.assertEqual(result.mapping[0.8].val, 8)   # 3 + 2
-        self.assertEqual(result.mapping[0.7].val, 5)   # 3 + 2 (extended)
+    def test_crisp_arguments(self):
+        """Test passing crisp arguments"""
+        RLint, RLset = rlify(int), rlify(set)
+        # Add RL-ints
+        sum = self.rlint1+10
+        exp_sum = {1: 15, 0.8: 13}
+        self.assertIsInstance(sum, RLint)
+        self.assertEqual(sum.mapping, exp_sum)
+        # Union of RL-sets
+        union = self.rlset1 | {'b','c'}
+        exp_union = {1: {'a','b','c'}, 0.8: {'b','c'}}
+        self.assertIsInstance(union, RLset)
+        self.assertEqual(union.mapping, exp_union)
 
-    def test_sub_operation(self):
-        """Test __sub__ operation returning crisp int."""
-        RLA = rlify(A)
-        rla1 = RLA({1.0: A(10), 0.7: A(7)})
-        rla2 = RLA({1.0: A(5), 0.7: A(2)})
-        result = rla1 - rla2
-        self.assertIsInstance(result, int)
-        self.assertEqual(result, 5)  # 10 - 5 (level 1.0)
+    def test_squashing(self):
+        """Test squashing RLs"""
+        RLint, RLset = rlify(int), rlify(set)
+        # Subtraction of RL-ints
+        sub = RLint({1: 7, 0.8: 3, 0.5: 5}) - RLint({1: 5, 0.8: 1, 0.6: 10})
+        exp_sub = {1: 2, 0.6: -7, 0.5: -5}
+        self.assertIsInstance(sub, RLint)
+        self.assertEqual(sub.mapping, exp_sub)
+        # Intersection of RL-sets
+        union = self.rlset1 & self.rlset2
+        exp_union = {1: set(), 0.8: {'c'}}
+        self.assertIsInstance(union, RLset)
+        self.assertEqual(union.mapping, exp_union)
 
-    def test_dynamic_rl_creation(self):
-        """Test dynamic RL class creation for OtherSet."""
-        RLMySet = rlify(MySet)
-        rl1 = RLMySet({1.0: MySet({"a"}), 0.7: MySet({"b"})})
-        rl2 = RLMySet({1.0: MySet({"c"}), 0.7: MySet({"d"})})
-        result = rl1.union(rl2)
-        self.assertIsInstance(result, RL_REGISTRY[OtherSet])
-        self.assertEqual(result.mapping, {1.0: OtherSet({"a", "c"}), 0.7: OtherSet({"b", "d"})})
-        self.assertIn(OtherSet, RL_REGISTRY)
+    def test_crisp_output(self):
+        """"Test giving crisp output"""
+        # Multiplication of RL-ints
+        RLint = rlify(int)
+        mult = RLint({1: 5, 0.8: 3}) * RLint({1: 3, 0.8: 5})
+        exp_mult = 15
+        self.assertIsInstance(mult, int)
+        self.assertEqual(mult, exp_mult)
 
-    def test_single_level_mapping(self):
-        """Test single-level mapping returns crisp object."""
-        RLA = rlify(A)
-        rla = RLA({1.0: A(10)})
-        result = rla + RLA({1.0: A(5)})
-        self.assertIsInstance(result, A)
-        self.assertEqual(result.val, 15)
+    def test_output_class(self):
+        """"Test different class of the output"""
+        # Division of RL-ints produces RL-float
+        RLint = rlify(int)
+        div = RLint({1: 10, 0.8: 8}) / RLint({1: 5, 0.8: 2})
+        exp_div = {1: 2, 0.8: 4}
+        RLfloat = rlify(float)
+        self.assertIsInstance(div, RLfloat)
+        self.assertEqual(div._instance_class, float)
+        self.assertEqual(div.mapping, exp_div)
 
-    def test_str_representation(self):
-        """Test __str__ uses rl_table correctly."""
-        RLA = rlify(A)
-        rla = RLA({1.0: A(10), 0.8: A(3)})
-        self.assertIn("A", str(rla))
-        self.assertIn("1.0", str(rla))
-        self.assertIn("0.8", str(rla))
+    def test_method_signatures(self):
+        """"Test complicated method signatures"""
+        # Test default value
+        RLint = rlify(int)
+        def_test = self.rlcomp1.method(self.rlcomp2, c=self.rlint1)
+        exp = {1: 20, 0.8: 23, 0.7: 22}
+        self.assertIsInstance(def_test, RLint)
+        self.assertEqual(def_test._instance_class, int)
+        self.assertEqual(def_test.mapping, exp)
+        # General test with arbirtrary args and kwargs
+        def_test = self.rlcomp1.method(self.rlcomp2, 10, 20, c=self.rlint1, some_kwarg=10)
+        exp = {1: 53, 0.8: 56, 0.7: 55}
+        self.assertIsInstance(def_test, RLint)
+        self.assertEqual(def_test._instance_class, int)
+        self.assertEqual(def_test.mapping, exp)
 
-    def test_crisp_argument_rlification(self):
-        """Test RLification of crisp arguments in general_method."""
-        RLA = rlify(A)
-        rla = RLA({1.0: A(10), 0.8: A(3)})
-        crisp_arg = A(5)
-        result = rla + crisp_arg
-        self.assertIsInstance(result, RLA)
-        self.assertEqual(result.mapping[1.0].val, 15)  # 10 + 5
-        self.assertEqual(result.mapping[0.8].val, 8)   # 3 + 5
+    def test_inheritance(self):
+        """Test inherited method calling"""
+        RLChildClass, RLint = rlify(ChildClass), rlify(int)
+        rlchild1 = RLChildClass({1: ChildClass(5), 0.8: ChildClass(10)})
+        rlchild2 = RLChildClass({1: ChildClass(3), 0.7: ChildClass(2)})
+        def_test = rlchild1.method(rlchild2, c=self.rlint1)
+        exp = {1: 20, 0.8: 23, 0.7: 22}
+        self.assertIsInstance(def_test, RLint)
+        self.assertEqual(def_test._instance_class, int)
+        self.assertEqual(def_test.mapping, exp)
 
-    def test_invalid_mapping(self):
-        """Test invalid mapping raises ValueError."""
-        RLA = rlify(A)
-        with self.assertRaises(ValueError):
-            RLA({0.5: A(10)})  # Missing level 1.0
-        with self.assertRaises(ValueError):
-            RLA({1.0: A(10), 1.5: A(3)})  # Level > 1.0
-
-    def test_builtin_type(self):
-        """Test rlification of built-in type (int)."""
-        RLInt = rlify(int)
-        rlint = RLInt({1.0: 10, 0.8: 3})
-        result = rlint + RLInt({1.0: 5, 0.7: 2})
-        self.assertIsInstance(result, RLInt)
-        self.assertEqual(result.mapping, {1.0: 15, 0.8: 8, 0.7: 5})
+    def test_explicit_magic_methods(self):
+        """"Test explicit magic methods"""
+        # Not equality of RL-ints
+        RLbool = rlify(bool)
+        neq = self.rlint1.__ne__(self.rlint2)
+        exp_neq = {1: False, 0.8: True}
+        self.assertIsInstance(neq, RLbool)
+        self.assertEqual(neq.mapping, exp_neq)
 
 if __name__ == '__main__':
     unittest.main()
