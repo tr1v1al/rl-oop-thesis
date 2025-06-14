@@ -23,3 +23,10 @@ This repository contains the source code and documentation for the `rlistic` sof
   - `test_static`
   - `test_runtime`
   - `test_proxy`
+
+
+  ## License
+The `rlistic` software code is licensed under the [MIT License](LICENSE).
+
+Documentation and examples are licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
+[![CC BY 4.0](https://i.creativecommons.org/l/by/4.0/88x31.png)](http://creativecommons.org/licenses/by/4.0/)
