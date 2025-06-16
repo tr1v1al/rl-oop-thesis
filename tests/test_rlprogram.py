@@ -102,7 +102,7 @@ print(f"Processed: same_output")
         self.assertIn("Input file must have 2 input lines, got 1", str(cm.exception))
 
     def test_squash_crisp(self):
-        """Test rlify_program with multiprocessing (nproc=-1)."""
+        """Test squashing and producing crisp output."""
         same_script_path = str(Path(self.same_script).resolve())
         command = ["python", same_script_path]
         input_rl = rl_input(self.input_file)

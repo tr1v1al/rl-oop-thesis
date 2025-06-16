@@ -1,8 +1,6 @@
 import unittest
 import os
 import tempfile
-from pathlib import Path
-from typing import Set
 from rlistic.common import validate_level_set, validate_mapping, rl_table, rl_input, fuzzy_to_rl, rl_fuzzy_summary
 
 class TestCommon(unittest.TestCase):
